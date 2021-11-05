@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+      integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css"
+    />
+    <!-- <link
+      href="https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css"
+      rel="stylesheet"
+    /> -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <!-- <script src="https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.js"></script> -->
+
+    <!-- ------------------------------------------------------------------------------ -->
+    <!-- ----------------------------geocoder-plugin----------------------------------- -->
+    <!-- ------------------------------------------------------------------------------ -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+    />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <!-- ------------------------------------------------------------------------------- -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="sliding-header">
+      <h2></h2>
+      <p></p>
+    </div>
+    <div class="map-container">
+      <div id="map">
+        <button class="showLayer"><i class="fas fa-layer-group"></i></button>
+        <button class="setRoute"><i class="fas fa-map-marked-alt"></i></button>
+      </div>
+    </div>
+    <div class="slidingPanel">
+      <button class="closeBtn"><i class="fas fa-times"></i></button>
+      <button class="prevArrowBtn">
+        <i class="fas fa-long-arrow-alt-left"></i>
+      </button>
+      <!-- <button class="example3d"><span>Related</span></button> -->
+      <h2></h2>
+      <div class="buttons">
+        <!-- <button class="sidePanelBtn active" id="description">
+          <i class="fas fa-book-open"></i> Description
+        </button>
+        <button class="sidePanelBtn" id="timelineBtn">
+          <i class="fas fa-history"></i> Timeline
+        </button> -->
+      </div>
+      <div class="text"></div>
+      <h4 class="related-title">Related</h4>
+      <div class="relatedBtns">
+        <!-- <button class="relatedBtn active" id="characters">
+          <i class="fas fa-users"></i> Characters
+        </button>
+        <button class="relatedBtn" id="places">
+          <i class="fas fa-map-marker"></i> Places
+        </button>
+        <button class="relatedBtn" id="topics">
+          <i class="fas fa-book"></i> Topics
+        </button> -->
+      </div>
+      <div class="related"></div>
+    </div>
+    <div class="timeline-container">
+      <div class="frame-pointer"></div>
+      <div class="zoom-container">
+        <button class="zoom zoomIn"><i class="fas fa-plus"></i></button>
+        <button class="zoom zoomOut"><i class="fas fa-minus"></i></button>
+      </div>
+      <button class="navigationBtn prev">
+        <i class="fas fa-caret-left"></i>
+      </button>
+      <button class="navigationBtn next">
+        <i class="fas fa-caret-right"></i>
+      </button>
+
+      <div class="frame"></div>
+      <div class="timeline">
+        <div class="dots">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="timeline-inner">
+          <div class="additional-timelines"></div>
+          <div class="line">
+            <div class="line-before"></div>
+            <div class="line-inner">
+              <div class="year-timeline"></div>
+            </div>
+            <div class="line-after"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
