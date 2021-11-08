@@ -276,15 +276,14 @@ const dots = document.querySelector(".dots");
 async function fetchData() {
   try {
     const response = await fetch(
-      "http://127.0.0.1:8000/data/terms/?format=json"
+      "https://cretio.atechno.pl/data/terms/?format=json"
     );
 
     const fetchedData = await response.json();
-    // data = fetchedData;
-    console.log(data);
+
     console.log("Fetched Data");
     console.log(fetchedData);
-    if (data !== []) {
+    if (fetchData !== []) {
       setTimeout(() => {
         const years = generateMainTimeline(fetchedData);
         const isOnTimelineData = fetchedData.filter(
@@ -311,9 +310,9 @@ function generateMainTimeline(data) {
     .filter((item) => item.is_in_main_timeline && item.term_type === "event")
     .map((item) => {
       const [date] = item.date;
-      const { year_from } = date;
-      console.log(year_from);
-      return year_from;
+      const { start_year } = date;
+      console.log(start_year);
+      return start_year;
     });
   console.log(generateYears);
   const minYear = Math.min(...generateYears);
