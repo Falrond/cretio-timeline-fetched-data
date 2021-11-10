@@ -269,6 +269,39 @@ let data = [
 ];
 
 // -----------------------------------------------------------------------------------------
+// ------------------------------------Query-Selector-Elements------------------------------
+// -----------------------------------------------------------------------------------------
+
+const line = document.querySelector(".line");
+const lineInner = document.querySelector(".line-inner");
+const lineBefore = document.querySelector(".line-before");
+const lineAfter = document.querySelector(".line-after");
+const yearTimeline = document.querySelector(".year-timeline");
+const timelineWidth = line.offsetWidth;
+const innerTimeline = document.querySelector(".timeline-inner");
+const timeLineContainer = document.querySelector(".timeline-container");
+
+// ------------Sliding Header--------------------------
+const slidingHeader = document.querySelector(".sliding-header");
+const headingTitle = document.querySelector(".sliding-header h2");
+const headingText = document.querySelector(".sliding-header p");
+const slidingHeaderUp = document.querySelector(".sliding-header.up");
+
+// ------------Sliding Sidepanel-----------------------
+const slidingPanel = document.querySelector(".slidingPanel");
+const slidingPanelHeader = document.querySelector(".slidingPanel h2");
+const slidingPanelButtons = document.querySelector(".buttons");
+const slidingPanelText = document.querySelector(".text");
+const relatedDiv = document.querySelector(".related");
+const relatedBtnContainer = document.querySelector(".relatedBtns");
+const prevArrowBtn = document.querySelector(".prevArrowBtn");
+
+const showLayerBtn = document.querySelector(".showLayer");
+const setRoute = document.querySelector(".setRoute");
+
+let zoomLevel = 3;
+
+// -----------------------------------------------------------------------------------------
 // --------------------------------------Fetch-Data-From-Django-API-------------------------
 // -----------------------------------------------------------------------------------------
 
@@ -281,16 +314,22 @@ async function fetchData() {
 
     const fetchedData = await response.json();
 
-    console.log("Fetched Data");
+    console.log(
+      "-----------------------------------------Fetched Data-------------------------------------------"
+    );
     console.log(fetchedData);
+    console.log(
+      "------------------------------------------------------------------------------------------------"
+    );
     if (fetchData !== []) {
       setTimeout(() => {
-        const years = generateMainTimeline(fetchedData);
+        const rangeOfYears = generateRangeOfYears(fetchedData);
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
         );
         console.log(isOnTimelineData);
-        console.log(years);
+        console.log(rangeOfYears);
+        // addYearsToTimeline(rangeOfYears);
         dots.style.display = "none";
       }, 1000);
     }
@@ -302,24 +341,58 @@ async function fetchData() {
 fetchData();
 
 // ------------------------------------------------------------------------------------
-// --------------------------get-and-filter-data-from-fetch----------------------------
+// --------------------------Generate-range-of-years-from-fetch-data-------------------
 // ------------------------------------------------------------------------------------
 
-function generateMainTimeline(data) {
-  const generateYears = data
-    .filter((item) => item.is_in_main_timeline && item.term_type === "event")
+function generateRangeOfYears(data) {
+  const yearsOnTimeline = data
+    .filter((item) => item.is_in_main_timeline)
     .map((item) => {
       const [date] = item.date;
       const { start_year } = date;
-      console.log(start_year);
       return start_year;
     });
-  console.log(generateYears);
-  const minYear = Math.min(...generateYears);
-  const maxYear = Math.max(...generateYears);
-  const years = range(minYear, maxYear, 100);
-  return years;
+  const minYear = Math.min(...yearsOnTimeline);
+  const maxYear = Math.max(...yearsOnTimeline);
+  const rangeOfYears = range(minYear, maxYear, 100);
+  return rangeOfYears;
 }
+
+// ------------------------------------------------------------------------------------
+// ----------------------------Add-years-to-timeline-----------------------------------
+// ------------------------------------------------------------------------------------
+
+function addYearsToTimeline(rangeOfYears) {
+  yearTimeline.innerHTML = "";
+  rangeOfYears.forEach((year) => {
+    const span = document.createElement("span");
+    span.classList.add("year-label");
+    span.innerHTML = `<time class="time">${year}</time>`;
+    span.style.width = `${zoomLevel * 150}px`;
+    yearTimeline.appendChild(span);
+  });
+}
+
+// ------------------------------------------------------------------------------------
+// ---------------------------Set-width-on-main-timeline-------------------------------
+// ------------------------------------------------------------------------------------
+
+function setWidthOnMainTimeline() {
+  lineInner.style.width = yearTimeline.offsetWidth + "px";
+  innerTimeline.style.width =
+    yearTimeline.offsetWidth +
+    lineBefore.getBoundingClientRect().width +
+    lineAfter.getBoundingClientRect().width +
+    "px";
+}
+
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
 
 const generateYears = data
   .filter((item) => item.on_timeline)
@@ -362,34 +435,6 @@ const isOnTimelineData = data.filter((item) => item.on_timeline);
 const scale = (num, in_min, in_max, out_min, out_max) => {
   return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
 };
-const line = document.querySelector(".line");
-const lineInner = document.querySelector(".line-inner");
-const lineBefore = document.querySelector(".line-before");
-const lineAfter = document.querySelector(".line-after");
-const yearTimeline = document.querySelector(".year-timeline");
-const timelineWidth = line.offsetWidth;
-const innerTimeline = document.querySelector(".timeline-inner");
-const timeLineContainer = document.querySelector(".timeline-container");
-
-// ------------Sliding Header--------------------------
-const slidingHeader = document.querySelector(".sliding-header");
-const headingTitle = document.querySelector(".sliding-header h2");
-const headingText = document.querySelector(".sliding-header p");
-const slidingHeaderUp = document.querySelector(".sliding-header.up");
-
-// ------------Sliding Sidepanel-----------------------
-const slidingPanel = document.querySelector(".slidingPanel");
-const slidingPanelHeader = document.querySelector(".slidingPanel h2");
-const slidingPanelButtons = document.querySelector(".buttons");
-const slidingPanelText = document.querySelector(".text");
-const relatedDiv = document.querySelector(".related");
-const relatedBtnContainer = document.querySelector(".relatedBtns");
-const prevArrowBtn = document.querySelector(".prevArrowBtn");
-
-const showLayerBtn = document.querySelector(".showLayer");
-const setRoute = document.querySelector(".setRoute");
-
-let zoomLevel = 3;
 
 years.forEach((year) => {
   const span = document.createElement("span");
@@ -410,6 +455,11 @@ innerTimeline.style.width =
   lineBefore.getBoundingClientRect().width +
   lineAfter.getBoundingClientRect().width +
   "px";
+
+// -----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------
+
 const mainYears = document.querySelectorAll(".year-label");
 
 isOnTimelineData.forEach((item) => {
@@ -421,6 +471,7 @@ isOnTimelineData.forEach((item) => {
       return item.date;
     }
   })[0].children[0];
+  console.log(lowYear);
 
   const highYear = [...mainYears].filter((elem) => {
     if (+elem.children[0].innerText === highestYear) {
@@ -432,6 +483,7 @@ isOnTimelineData.forEach((item) => {
     lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
   const highRangePosition =
     highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
+  console.log(highYear);
 
   const btn = document.createElement("button");
   btn.id = `${item.id}`;
@@ -449,9 +501,9 @@ isOnTimelineData.forEach((item) => {
   lineInner.appendChild(btn);
 });
 
-// -----------------------------------------------------------
-// -----------------------------------------------------------
-// -----------------------------------------------------------
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 
 const timeline = document.querySelector(".timeline");
 const times = document.querySelectorAll(".time");
@@ -475,7 +527,6 @@ mapContainer.style.height = `calc(100vh - ${timeLineContainer.offsetHeight}px)`;
 // ----------------------VARIABLES--------------------------
 
 let currentBtn;
-// let currentSubject = [];
 let mainSubject;
 let isActive = false;
 let isMoved = false;
@@ -602,7 +653,7 @@ function updateYear() {
   let frameValue;
   // let rightValue;
   const rightRange = times[leftRange.length];
-  console.log(rightRange);
+
   if (!rightRange) {
     frameValue = years[years.length - 1].innerHTML;
   } else {
@@ -612,7 +663,6 @@ function updateYear() {
   frameValue = Math.floor(
     scale(windowCenter, spanLeft, spanLeft + spanWidth, leftValue, rightValue)
   );
-  console.log(frameValue);
 
   frame.innerText = frameValue;
 }
@@ -1382,6 +1432,8 @@ let polylinePoints = [
   [31.770011, 35.224564],
   [32.17967, 35.678333],
 ];
+
+console.log(polylinePoints);
 
 let polyline = L.polyline(polylinePoints);
 
