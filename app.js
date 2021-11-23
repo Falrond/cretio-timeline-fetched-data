@@ -268,6 +268,8 @@ let data = [
   },
 ];
 
+let dataFromApi;
+
 // -----------------------------------------------------------------------------------------
 // ------------------------------------Query-Selector-Elements------------------------------
 // -----------------------------------------------------------------------------------------
@@ -280,6 +282,7 @@ const yearTimeline = document.querySelector(".year-timeline");
 const timelineWidth = line.offsetWidth;
 const innerTimeline = document.querySelector(".timeline-inner");
 const timeLineContainer = document.querySelector(".timeline-container");
+let btns;
 
 // ------------Sliding Header--------------------------
 const slidingHeader = document.querySelector(".sliding-header");
@@ -321,17 +324,36 @@ async function fetchData() {
     console.log(
       "------------------------------------------------------------------------------------------------"
     );
+
     if (fetchData !== []) {
       setTimeout(() => {
-        const rangeOfYears = generateRangeOfYears(fetchedData);
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
         );
-        console.log(isOnTimelineData);
-        console.log(rangeOfYears);
-        // addYearsToTimeline(rangeOfYears);
+        const rangeOfYears = generateRangeOfYears(fetchedData);
+
+        dataFromApi = isOnTimelineData;
+
+        addYearsToTimeline(rangeOfYears);
+        setWidthOnMainTimeline();
+        createYearBtns(isOnTimelineData, rangeOfYears);
         dots.style.display = "none";
-      }, 1000);
+        lineAfter.style.opacity = "100";
+        lineBefore.style.opacity = "100";
+        btns = document.querySelectorAll(".btn");
+        btns.forEach((btn) => {
+          btn.addEventListener("mouseup", (e) => {
+            e.preventDefault();
+            centerButton(btn);
+          });
+        });
+        btns.forEach((btn) => {
+          if (btn.getAttribute("title") === "-4") {
+            centerButton(btn);
+            markerOpen(btn.id);
+          }
+        });
+      }, 700);
     }
   } catch (error) {
     console.log(error);
@@ -351,7 +373,10 @@ function generateRangeOfYears(data) {
       const [date] = item.date;
       const { start_year } = date;
       return start_year;
-    });
+    })
+    .sort((a, b) => a - b);
+  console.log(yearsOnTimeline);
+  console.log(data);
   const minYear = Math.min(...yearsOnTimeline);
   const maxYear = Math.max(...yearsOnTimeline);
   const rangeOfYears = range(minYear, maxYear, 100);
@@ -363,12 +388,13 @@ function generateRangeOfYears(data) {
 // ------------------------------------------------------------------------------------
 
 function addYearsToTimeline(rangeOfYears) {
+  console.log(rangeOfYears);
   yearTimeline.innerHTML = "";
   rangeOfYears.forEach((year) => {
     const span = document.createElement("span");
     span.classList.add("year-label");
     span.innerHTML = `<time class="time">${year}</time>`;
-    span.style.width = `${zoomLevel * 150}px`;
+    span.style.width = `${zoomLevel * 100}px`;
     yearTimeline.appendChild(span);
   });
 }
@@ -387,18 +413,8 @@ function setWidthOnMainTimeline() {
 }
 
 // ------------------------------------------------------------------------------------
+// ----------------------------------generate-range------------------------------------
 // ------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------
-
-const generateYears = data
-  .filter((item) => item.on_timeline)
-  .map((item) => item.date);
-const minYear = Math.min(...generateYears);
-const maxYear = Math.max(...generateYears);
 
 const range = (minYear, maxYear, numRange) => {
   let range = [];
@@ -410,6 +426,76 @@ const range = (minYear, maxYear, numRange) => {
   range.push(maxYear + numRange);
   return range;
 };
+
+// ------------------------------------------------------------------------------------
+// ----------------------------scale-one-range-to-another------------------------------
+// ------------------------------------------------------------------------------------
+
+const scale = (num, in_min, in_max, out_min, out_max) => {
+  return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
+};
+
+// ------------------------------------------------------------------------------------
+// -----------------------------create-yearBtns-on-maintimeline------------------------
+// ------------------------------------------------------------------------------------
+function createYearBtns(timelineData, years) {
+  const mainYears = document.querySelectorAll(".year-label");
+  console.log(mainYears);
+
+  timelineData.forEach((item) => {
+    const [dateObject] = item.date;
+    const { start_year } = dateObject;
+    console.log(start_year);
+
+    const highestYear = years.find((elem) => elem > start_year);
+    const lowerYear = years[years.indexOf(highestYear) - 1];
+
+    const lowYear = [...mainYears].filter((elem) => {
+      if (+elem.children[0].innerText === lowerYear) {
+        return item.date;
+      }
+    })[0].children[0];
+    console.log(lowYear);
+
+    const highYear = [...mainYears].filter((elem) => {
+      if (+elem.children[0].innerText === highestYear) {
+        return item.date;
+      }
+    })[0].children[0];
+    console.log(highYear);
+
+    const lowRangePosition =
+      lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
+    const highRangePosition =
+      highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
+    // console.log(highYear);
+
+    // more than one item in section
+
+    const btn = document.createElement("button");
+    btn.id = `${item.id}`;
+    btn.classList.add("btn", "btn-4");
+    btn.setAttribute("title", start_year);
+    btn.style.left = `${scale(
+      start_year,
+      lowerYear,
+      highestYear,
+      lowRangePosition,
+      highRangePosition
+    )}px`;
+
+    lineInner.appendChild(btn);
+  });
+}
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+
+const generateYears = data
+  .filter((item) => item.on_timeline)
+  .map((item) => item.date);
+const minYear = Math.min(...generateYears);
+const maxYear = Math.max(...generateYears);
 
 const years = range(minYear, maxYear, 50);
 
@@ -432,74 +518,67 @@ const isOnTimelineData = data.filter((item) => item.on_timeline);
 // ------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------
 
-const scale = (num, in_min, in_max, out_min, out_max) => {
-  return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
-};
-
-years.forEach((year) => {
-  const span = document.createElement("span");
-  span.classList.add("year-label");
-  span.innerHTML = `<time class="time">${year}</time>`;
-  span.style.width = `${zoomLevel * 150}px`;
-  yearTimeline.appendChild(span);
-});
+// years.forEach((year) => {
+//   const span = document.createElement("span");
+//   span.classList.add("year-label");
+//   span.innerHTML = `<time class="time">${year}</time>`;
+//   span.style.width = `${zoomLevel * 150}px`;
+//   yearTimeline.appendChild(span);
+// });
 //
 
 // ------------------------------------------------------------
 // --------------dynamic-add-width-to-timeline-----------------
 // ------------------------------------------------------------
 
-lineInner.style.width = yearTimeline.offsetWidth + "px";
-innerTimeline.style.width =
-  yearTimeline.offsetWidth +
-  lineBefore.getBoundingClientRect().width +
-  lineAfter.getBoundingClientRect().width +
-  "px";
+// lineInner.style.width = yearTimeline.offsetWidth + "px";
+// innerTimeline.style.width =
+//   yearTimeline.offsetWidth +
+//   lineBefore.getBoundingClientRect().width +
+//   lineAfter.getBoundingClientRect().width +
+//   "px";
 
 // -----------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------
 
-const mainYears = document.querySelectorAll(".year-label");
+// isOnTimelineData.forEach((item) => {
+//   const highestYear = years.find((elem) => elem > item.date);
+//   const lowerYear = years[years.indexOf(highestYear) - 1];
 
-isOnTimelineData.forEach((item) => {
-  const highestYear = years.find((elem) => elem > item.date);
-  const lowerYear = years[years.indexOf(highestYear) - 1];
+//   const lowYear = [...mainYears].filter((elem) => {
+//     if (+elem.children[0].innerText === lowerYear) {
+//       return item.date;
+//     }
+//   })[0].children[0];
+//   // console.log(lowYear);
 
-  const lowYear = [...mainYears].filter((elem) => {
-    if (+elem.children[0].innerText === lowerYear) {
-      return item.date;
-    }
-  })[0].children[0];
-  console.log(lowYear);
+//   const highYear = [...mainYears].filter((elem) => {
+//     if (+elem.children[0].innerText === highestYear) {
+//       return item.date;
+//     }
+//   })[0].children[0];
 
-  const highYear = [...mainYears].filter((elem) => {
-    if (+elem.children[0].innerText === highestYear) {
-      return item.date;
-    }
-  })[0].children[0];
+//   const lowRangePosition =
+//     lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
+//   const highRangePosition =
+//     highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
+//   // console.log(highYear);
 
-  const lowRangePosition =
-    lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
-  const highRangePosition =
-    highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
-  console.log(highYear);
+//   const btn = document.createElement("button");
+//   btn.id = `${item.id}`;
+//   btn.classList.add("btn", "btn-4");
+//   btn.setAttribute("title", item.date);
+//   btn.style.left = `${scale(
+//     item.date,
+//     lowerYear,
+//     highestYear,
+//     lowRangePosition,
+//     highRangePosition
+//   )}px`;
 
-  const btn = document.createElement("button");
-  btn.id = `${item.id}`;
-  btn.classList.add("btn", "btn-4");
-  btn.setAttribute("title", item.date);
-  btn.style.left = `${scale(
-    item.date,
-    lowerYear,
-    highestYear,
-    lowRangePosition,
-    highRangePosition
-  )}px`;
-  //   btn.style.transform = "translateX(-110%) scale(1)";
-  //   btn.style.left = `${scale(year, minNum, maxNum, 0, timelineWidth)}px`;
-  lineInner.appendChild(btn);
-});
+//   lineInner.appendChild(btn);
+// });
 
 // -------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------
@@ -508,19 +587,19 @@ isOnTimelineData.forEach((item) => {
 const timeline = document.querySelector(".timeline");
 const times = document.querySelectorAll(".time");
 const windowCenter = window.innerWidth / 2;
-const btns = document.querySelectorAll(".btn");
+
 const frame = document.querySelector(".frame");
 const mapContainer = document.querySelector(
   ".map-container:not(.sliding-header)"
 );
-updateYear();
+// updateYear();
 
-btns.forEach((btn) => {
-  btn.addEventListener("mouseup", (e) => {
-    e.preventDefault();
-    centerButton(btn);
-  });
-});
+// btns.forEach((btn) => {
+//   btn.addEventListener("mouseup", (e) => {
+//     e.preventDefault();
+//     centerButton(btn);
+//   });
+// });
 
 mapContainer.style.height = `calc(100vh - ${timeLineContainer.offsetHeight}px)`;
 
@@ -639,8 +718,9 @@ function updateYear() {
       return time;
     }
   });
+
   // console.log(times);
-  // console.log(leftRange);
+  // console.log(...leftRange);
 
   const spanWidth =
     leftRange[leftRange.length - 1].parentElement.getBoundingClientRect().width;
@@ -653,6 +733,7 @@ function updateYear() {
   let frameValue;
   // let rightValue;
   const rightRange = times[leftRange.length];
+  // console.log(rightRange);
 
   if (!rightRange) {
     frameValue = years[years.length - 1].innerHTML;
@@ -696,6 +777,7 @@ function animateValue(obj, start, end, duration) {
 // ------------------------------------------------------
 
 function centerButton(btn) {
+  console.log(btn);
   prevBtn = currentBtn;
   currentBtn = btn;
   //   isActive = false;
@@ -741,7 +823,9 @@ function centerButton(btn) {
     isActive = true;
   }
 
-  const [currentSubject] = data.filter((item) => item.id === +currentBtn.id);
+  const [currentSubject] = dataFromApi.filter(
+    (item) => item.id === +currentBtn.id
+  );
   updateYear();
   changeYear();
   updateSidePanel();
@@ -764,7 +848,7 @@ function centerButton(btn) {
   setTimeout(() => {
     slideCenterHeader(currentSubject);
   }, 500);
-  generateTimelines(currentSubject);
+  // generateTimelines(currentSubject);
 }
 
 // ------------------------------------------------------
@@ -776,7 +860,7 @@ function updateText() {
     return;
   }
 
-  const currentElem = data.find((elem) => elem.id === +currentBtn.id);
+  const currentElem = dataFromApi.find((elem) => elem.id === +currentBtn.id);
 
   headingTitle.innerText = currentElem.title;
   headingText.innerText = `${currentElem.description
@@ -890,7 +974,9 @@ slidingHeader.addEventListener("click", () => {
   // ----------------------------Fade-in-Fade-out-effect------------------------------------
   // ---------------------------------------------------------------------------------------
 
-  const [currentSubject] = data.filter((item) => item.id === +currentBtn.id);
+  const [currentSubject] = dataFromApi.filter(
+    (item) => item.id === +currentBtn.id
+  );
   console.log(currentSubject);
   sidePanelContainer = currentSubject;
   console.log(sidePanelContainer);
@@ -1105,7 +1191,7 @@ function createRelated(arr, dest) {
   });
 }
 function showDescriAndTimeline(arr) {
-  console.log(arr);
+  // console.log(arr);
   let subjects = [];
   if (arr.description) {
     subjects.push("Description");
@@ -1113,7 +1199,7 @@ function showDescriAndTimeline(arr) {
   if (arr.relates && arr.relates.length !== 0) {
     subjects.push("Timeline");
   }
-  console.log(subjects);
+  // console.log(subjects);
   slidingPanelButtons.innerHTML = "";
   subjects.forEach((sub, index) => {
     const btn = document.createElement("button");
@@ -1266,7 +1352,7 @@ function generateTimelines(event) {
         ? object.end_date
         : dates[dates.length - 1];
 
-    createTimeline(startDate, endDate, index, object.id);
+    // createTimeline(startDate, endDate, index, object.id);
   });
 }
 
@@ -1372,20 +1458,20 @@ const coordinates = isOnTimelineData.map((item) => {
   return L.marker([latitude, longitude], { title: `${id}` });
 });
 
-btns.forEach((btn) => {
-  if (btn.getAttribute("title") === "-4") {
-    centerButton(btn);
-    markerOpen(btn.id);
-  }
-});
+// btns.forEach((btn) => {
+//   if (btn.getAttribute("title") === "-4") {
+//     centerButton(btn);
+//     markerOpen(btn.id);
+//   }
+// });
 
 // --------------------------------------------------------
 // ----------------ADD-MARKERS-TO-MAP----------------------
 // --------------------------------------------------------
 
-// for (let i = 0; i < coordinates.length; i++) {
-//   coordinates[i].addTo(map);
-// }
+for (let i = 0; i < coordinates.length; i++) {
+  coordinates[i].addTo(map);
+}
 coordinates.forEach((coord) => {
   if (coord._latlng.lat === 0 && coord._latlng.lng === 0) {
     return;
@@ -1433,7 +1519,7 @@ let polylinePoints = [
   [32.17967, 35.678333],
 ];
 
-console.log(polylinePoints);
+// console.log(polylinePoints);
 
 let polyline = L.polyline(polylinePoints);
 
@@ -1597,13 +1683,13 @@ function setBottom() {
 // -------------------------------------ZOOM-IN-/-ZOOM-OUT-LISTENERS-------------------------
 // ------------------------------------------------------------------------------------------
 
-document.querySelector(".zoomIn").addEventListener("click", () => {
-  zoomIn();
-});
+// document.querySelector(".zoomIn").addEventListener("click", () => {
+//   zoomIn();
+// });
 
-document.querySelector(".zoomOut").addEventListener("click", () => {
-  zoomOut();
-});
+// document.querySelector(".zoomOut").addEventListener("click", () => {
+//   zoomOut();
+// });
 
 // -----------------------------------------------------------------------------------------
 // -------------------------------ZOOM-IN-/-ZOOM-OUT-FUNCTIONS------------------------------
@@ -1731,15 +1817,15 @@ function updateYears() {
 // -------------------------JUMP-TO-ANOTHER-BTN-ON-TIMELINE--------------------------------
 // ----------------------------------------------------------------------------------------
 
-const prev = document.querySelector(".prev");
-const next = document.querySelector(".next");
+// const prev = document.querySelector(".prev");
+// const next = document.querySelector(".next");
 
-prev.addEventListener("click", () => {
-  jumpToAnotherBtn("prev");
-});
-next.addEventListener("click", () => {
-  jumpToAnotherBtn("next");
-});
+// prev.addEventListener("click", () => {
+//   jumpToAnotherBtn("prev");
+// });
+// next.addEventListener("click", () => {
+//   jumpToAnotherBtn("next");
+// });
 
 // ----------------------------------------------------------------------------------------
 //---------------------JUMP-TO-ANOTHER-BTN-AFTER-CLICK-ARROW-BUTTON------------------------
