@@ -330,11 +330,21 @@ async function fetchData() {
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
         );
+
+        const yearsOnTimeline = data
+          .filter((item) => item.is_in_main_timeline)
+          .map((item) => {
+            const [date] = item.date;
+            const { start_year } = date;
+            return start_year;
+          })
+          .sort((a, b) => a - b);
+
         const rangeOfYears = generateRangeOfYears(fetchedData);
 
         dataFromApi = isOnTimelineData;
 
-        addYearsToTimeline(rangeOfYears);
+        addYearsToTimeline(rangeOfYears, fetchedData);
         setWidthOnMainTimeline();
         createYearBtns(isOnTimelineData, rangeOfYears);
         dots.style.display = "none";
@@ -379,7 +389,7 @@ function generateRangeOfYears(data) {
   console.log(data);
   const minYear = Math.min(...yearsOnTimeline);
   const maxYear = Math.max(...yearsOnTimeline);
-  const rangeOfYears = range(minYear, maxYear, 100);
+  const rangeOfYears = range(minYear, maxYear, 25);
   return rangeOfYears;
 }
 
@@ -387,15 +397,42 @@ function generateRangeOfYears(data) {
 // ----------------------------Add-years-to-timeline-----------------------------------
 // ------------------------------------------------------------------------------------
 
-function addYearsToTimeline(rangeOfYears) {
+function addYearsToTimeline(rangeOfYears, data) {
+  const yearsOnTimeline = data
+    .filter((item) => item.is_in_main_timeline)
+    .map((item) => {
+      const [date] = item.date;
+      const { start_year } = date;
+      return start_year;
+    })
+    .sort((a, b) => a - b);
   console.log(rangeOfYears);
   yearTimeline.innerHTML = "";
   rangeOfYears.forEach((year) => {
-    const span = document.createElement("span");
-    span.classList.add("year-label");
-    span.innerHTML = `<time class="time">${year}</time>`;
-    span.style.width = `${zoomLevel * 100}px`;
-    yearTimeline.appendChild(span);
+    let items = [];
+    // console.log(year);
+    yearsOnTimeline.forEach((item) => {
+      let closestLowerYear = Math.max(
+        ...rangeOfYears.filter((num) => num <= item)
+      );
+      // console.log(`for number ${item} the lower value is ${closestLowerYear}`);
+      if (closestLowerYear === year) {
+        items.push(year);
+      }
+    });
+    // console.log(items.length);
+    // console.log(
+    //   "-------------------------------------------------------------------------"
+    // );
+    if (items.length !== 0) {
+      const span = document.createElement("span");
+      span.classList.add("year-label");
+      span.innerHTML = `<time class="time">${year}</time>`;
+      span.style.width = `${
+        zoomLevel * 50 + (items.length > 1 ? items.length * 100 : 0)
+      }px`;
+      yearTimeline.appendChild(span);
+    }
   });
 }
 
@@ -441,15 +478,25 @@ const scale = (num, in_min, in_max, out_min, out_max) => {
 function createYearBtns(timelineData, years) {
   const mainYears = document.querySelectorAll(".year-label");
   console.log(mainYears);
+  console.log(years);
+  const mainYearsNum = [...mainYears].map((item) => {
+    return +item.innerText;
+  });
+  console.log(mainYearsNum);
+  console.log(mainYearsNum[mainYearsNum.length - 1]);
 
   timelineData.forEach((item) => {
     const [dateObject] = item.date;
     const { start_year } = dateObject;
     console.log(start_year);
 
-    const highestYear = years.find((elem) => elem > start_year);
-    const lowerYear = years[years.indexOf(highestYear) - 1];
+    const highestYear = mainYearsNum.find((elem) => elem > start_year)
+      ? mainYearsNum.find((elem) => elem > start_year)
+      : mainYearsNum.find((elem) => elem >= start_year);
 
+    const lowerYear = mainYearsNum[mainYearsNum.indexOf(highestYear) - 1];
+
+    console.log(lowerYear);
     const lowYear = [...mainYears].filter((elem) => {
       if (+elem.children[0].innerText === lowerYear) {
         return item.date;
@@ -777,7 +824,7 @@ function animateValue(obj, start, end, duration) {
 // ------------------------------------------------------
 
 function centerButton(btn) {
-  console.log(btn);
+  // console.log(btn);
   prevBtn = currentBtn;
   currentBtn = btn;
   //   isActive = false;
