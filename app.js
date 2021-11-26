@@ -389,7 +389,7 @@ function generateRangeOfYears(data) {
   console.log(data);
   const minYear = Math.min(...yearsOnTimeline);
   const maxYear = Math.max(...yearsOnTimeline);
-  const rangeOfYears = range(minYear, maxYear, 25);
+  const rangeOfYears = range(minYear, maxYear, 10);
   return rangeOfYears;
 }
 
@@ -406,11 +406,11 @@ function addYearsToTimeline(rangeOfYears, data) {
       return start_year;
     })
     .sort((a, b) => a - b);
-  console.log(rangeOfYears);
+  // console.log(rangeOfYears);
   yearTimeline.innerHTML = "";
   rangeOfYears.forEach((year) => {
     let items = [];
-    // console.log(year);
+
     yearsOnTimeline.forEach((item) => {
       let closestLowerYear = Math.max(
         ...rangeOfYears.filter((num) => num <= item)
@@ -454,13 +454,19 @@ function setWidthOnMainTimeline() {
 // ------------------------------------------------------------------------------------
 
 const range = (minYear, maxYear, numRange) => {
+  console.log(minYear);
+  console.log(maxYear);
+  console.log(numRange);
   let range = [];
   range.push(maxYear);
   for (let i = minYear; i < maxYear; i += numRange) {
     range.push(i);
   }
   range.sort((a, b) => a - b);
-  range.push(maxYear + numRange);
+  console.log(range);
+  console.log(maxYear);
+  let maxWithRange = maxYear + numRange;
+  range.push(maxWithRange);
   return range;
 };
 
@@ -478,7 +484,7 @@ const scale = (num, in_min, in_max, out_min, out_max) => {
 function createYearBtns(timelineData, years) {
   const mainYears = document.querySelectorAll(".year-label");
   console.log(mainYears);
-  console.log(years);
+  // console.log(years);
   const mainYearsNum = [...mainYears].map((item) => {
     return +item.innerText;
   });
@@ -496,7 +502,7 @@ function createYearBtns(timelineData, years) {
 
     const lowerYear = mainYearsNum[mainYearsNum.indexOf(highestYear) - 1];
 
-    console.log(lowerYear);
+    // console.log(lowerYear);
     const lowYear = [...mainYears].filter((elem) => {
       if (+elem.children[0].innerText === lowerYear) {
         return item.date;
@@ -509,6 +515,7 @@ function createYearBtns(timelineData, years) {
         return item.date;
       }
     })[0].children[0];
+
     console.log(highYear);
 
     const lowRangePosition =
@@ -544,7 +551,7 @@ const generateYears = data
 const minYear = Math.min(...generateYears);
 const maxYear = Math.max(...generateYears);
 
-const years = range(minYear, maxYear, 50);
+// const years = range(minYear, maxYear, 50);
 
 const isOnTimelineData = data.filter((item) => item.on_timeline);
 
