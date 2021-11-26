@@ -408,10 +408,10 @@ function addYearsToTimeline(rangeOfYears, data) {
     .sort((a, b) => a - b);
   // console.log(rangeOfYears);
   yearTimeline.innerHTML = "";
-  rangeOfYears.forEach((year) => {
+  rangeOfYears.forEach((year, index) => {
     let items = [];
 
-    yearsOnTimeline.forEach((item) => {
+    yearsOnTimeline.forEach((item, index) => {
       let closestLowerYear = Math.max(
         ...rangeOfYears.filter((num) => num <= item)
       );
@@ -424,7 +424,7 @@ function addYearsToTimeline(rangeOfYears, data) {
     // console.log(
     //   "-------------------------------------------------------------------------"
     // );
-    if (items.length !== 0) {
+    if (items.length !== 0 || index === rangeOfYears.length - 1) {
       const span = document.createElement("span");
       span.classList.add("year-label");
       span.innerHTML = `<time class="time">${year}</time>`;
@@ -433,6 +433,7 @@ function addYearsToTimeline(rangeOfYears, data) {
       }px`;
       yearTimeline.appendChild(span);
     }
+    // index === yearsOnTimeline.length - 1
   });
 }
 
@@ -462,11 +463,13 @@ const range = (minYear, maxYear, numRange) => {
   for (let i = minYear; i < maxYear; i += numRange) {
     range.push(i);
   }
+  let maxWithRange = maxYear + numRange;
+  console.log(maxWithRange);
+  range.push(maxWithRange);
   range.sort((a, b) => a - b);
   console.log(range);
   console.log(maxYear);
-  let maxWithRange = maxYear + numRange;
-  range.push(maxWithRange);
+
   return range;
 };
 
