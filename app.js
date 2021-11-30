@@ -331,7 +331,7 @@ async function fetchData() {
           (item) => item.is_in_main_timeline
         );
 
-        const yearsOnTimeline = data
+        const yearsOnTimeline = fetchedData
           .filter((item) => item.is_in_main_timeline)
           .map((item) => {
             const [date] = item.date;
@@ -343,10 +343,10 @@ async function fetchData() {
         const rangeOfYears = generateRangeOfYears(fetchedData);
 
         dataFromApi = isOnTimelineData;
-
+        console.log(yearsOnTimeline);
         addYearsToTimeline(rangeOfYears, fetchedData);
         setWidthOnMainTimeline();
-        createYearBtns(isOnTimelineData, rangeOfYears);
+        createYearBtns(isOnTimelineData, yearsOnTimeline);
         dots.style.display = "none";
         lineAfter.style.opacity = "100";
         lineBefore.style.opacity = "100";
@@ -409,28 +409,55 @@ function addYearsToTimeline(rangeOfYears, data) {
   // console.log(rangeOfYears);
   yearTimeline.innerHTML = "";
   rangeOfYears.forEach((year, index) => {
-    let items = [];
+    let lowerYears = [];
+    let higherYears = [];
 
     yearsOnTimeline.forEach((item, index) => {
       let closestLowerYear = Math.max(
         ...rangeOfYears.filter((num) => num <= item)
       );
+
+      let closestHigherYear = Math.min(
+        ...rangeOfYears.filter((num) => num > item)
+      );
+
+      // console.log(`for ${item} the closesthigheryear is${closestHigherYear}`);
       // console.log(`for number ${item} the lower value is ${closestLowerYear}`);
       if (closestLowerYear === year) {
-        items.push(year);
+        lowerYears.push(year);
+      }
+      if (yearsOnTimeline[index - 1]) {
+        if (Math.abs(yearsOnTimeline[index - 1] - item) < 5) {
+          if (closestHigherYear === year) {
+            console.log(
+              `${yearsOnTimeline[index - 1]}, ${item} = ${Math.abs(
+                yearsOnTimeline[index - 1] - item
+              )}`
+            );
+            higherYears.push(year);
+          }
+        }
       }
     });
     // console.log(items.length);
     // console.log(
     //   "-------------------------------------------------------------------------"
     // );
-    if (items.length !== 0 || index === rangeOfYears.length - 1) {
+    // console.log(lowerYears);
+    console.log(higherYears);
+    if (
+      lowerYears.length !== 0 ||
+      higherYears.length !== 0 ||
+      index === rangeOfYears.length - 1
+    ) {
       const span = document.createElement("span");
       span.classList.add("year-label");
       span.innerHTML = `<time class="time">${year}</time>`;
+
       span.style.width = `${
-        zoomLevel * 50 + (items.length > 1 ? items.length * 100 : 0)
+        zoomLevel * 70 + (lowerYears.length > 1 ? lowerYears.length * 50 : 0)
       }px`;
+
       yearTimeline.appendChild(span);
     }
     // index === yearsOnTimeline.length - 1
@@ -455,26 +482,24 @@ function setWidthOnMainTimeline() {
 // ------------------------------------------------------------------------------------
 
 const range = (minYear, maxYear, numRange) => {
-  console.log(minYear);
-  console.log(maxYear);
-  console.log(numRange);
   let range = [];
   range.push(maxYear);
   for (let i = minYear; i < maxYear; i += numRange) {
     range.push(i);
   }
+
   let maxWithRange = maxYear + numRange;
   console.log(maxWithRange);
   range.push(maxWithRange);
   range.sort((a, b) => a - b);
-  console.log(range);
-  console.log(maxYear);
+  // console.log(range);
+  // console.log(maxYear);
 
   return range;
 };
 
 // ------------------------------------------------------------------------------------
-// ----------------------------scale-one-range-to-another------------------------------
+// -----------------------scale-one-number-range-to-another-range----------------------
 // ------------------------------------------------------------------------------------
 
 const scale = (num, in_min, in_max, out_min, out_max) => {
@@ -484,34 +509,53 @@ const scale = (num, in_min, in_max, out_min, out_max) => {
 // ------------------------------------------------------------------------------------
 // -----------------------------create-yearBtns-on-maintimeline------------------------
 // ------------------------------------------------------------------------------------
-function createYearBtns(timelineData, years) {
+function createYearBtns(timelineData) {
   const mainYears = document.querySelectorAll(".year-label");
   console.log(mainYears);
-  // console.log(years);
+
   const mainYearsNum = [...mainYears].map((item) => {
     return +item.innerText;
   });
   console.log(mainYearsNum);
   console.log(mainYearsNum[mainYearsNum.length - 1]);
-
-  timelineData.forEach((item) => {
+  console.log(timelineData);
+  const sortedData = timelineData.slice(0).sort((a, b) => {
+    return a.date[0].start_year - b.date[0].start_year;
+  });
+  console.log(sortedData);
+  sortedData.forEach((item, index) => {
     const [dateObject] = item.date;
     const { start_year } = dateObject;
-    console.log(start_year);
-
     const highestYear = mainYearsNum.find((elem) => elem > start_year)
       ? mainYearsNum.find((elem) => elem > start_year)
       : mainYearsNum.find((elem) => elem >= start_year);
 
     const lowerYear = mainYearsNum[mainYearsNum.indexOf(highestYear) - 1];
 
-    // console.log(lowerYear);
+    // if (sortedData[index - 1]) {
+    //   if (
+    //     Math.abs(
+    //       sortedData[index - 1].date[0].start_year -
+    //         sortedData[index].date[0].start_year
+    //     ) < 10 &&
+    //     Math.abs(lowerYear - highestYear) > 10
+    //   ) {
+    //     console.log(`${sortedData[index].date[0].start_year} jest mniejsze`);
+    //     const dataSpan = [...mainYears].filter((elem) => {
+    //       if (+elem.children[0].innerText === lowerYear) {
+    //         return item.date;
+    //       }
+    //     })[0];
+    //     dataSpan.style.width = `${dataSpan.offsetWidth + 100}px`;
+    //     console.log(dataSpan.offsetWidth);
+    //   }
+    // }
+
     const lowYear = [...mainYears].filter((elem) => {
       if (+elem.children[0].innerText === lowerYear) {
         return item.date;
       }
     })[0].children[0];
-    console.log(lowYear);
 
     const highYear = [...mainYears].filter((elem) => {
       if (+elem.children[0].innerText === highestYear) {
@@ -519,13 +563,12 @@ function createYearBtns(timelineData, years) {
       }
     })[0].children[0];
 
-    console.log(highYear);
+    // console.log(highYear);
 
     const lowRangePosition =
       lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
     const highRangePosition =
       highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
-    // console.log(highYear);
 
     // more than one item in section
 
@@ -763,6 +806,7 @@ function checkBtnCenter() {
     }
   });
 }
+
 // ---------------------------------------------------------------------------------------
 // ---------------------------UPDATE-YEAR-IN-FRAME-WHILE-SLIDE----------------------------
 // ---------------------------------------------------------------------------------------
