@@ -367,7 +367,7 @@ async function fetchData() {
             markerOpen(btn.id);
           }
         });
-      }, 700);
+      }, 500);
     }
   } catch (error) {
     console.log(error);
@@ -480,9 +480,7 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
       span.classList.add("year-label");
       span.innerHTML = `<time class="time">${year}</time>`;
 
-      span.style.width = `${
-        zoomLevel * 70 + (lowerYears.length > 1 ? lowerYears.length * 30 : 0)
-      }px`;
+      span.style.width = `${zoomLevel * 80}px`;
       // change length of span depends on quantity of years
       // + (lowerYears.length > 1 ? lowerYears.length * 50 : 0)
       yearTimeline.appendChild(span);
@@ -848,7 +846,6 @@ function checkBoundry() {
     innerTimeline.style.left = `-${inner.width - outer.width}px`;
   }
 }
-
 checkBoundry();
 
 // --------------------------------------------------------------------------------------
@@ -1234,6 +1231,7 @@ function showRelated(arr) {
 
   console.log(relatesData);
 
+  // show term_type from relates
   const types = [...new Set(relatesData.map((item) => item.term_type))].sort();
   // console.log(types);
 
@@ -1355,7 +1353,7 @@ function createRelated(arr, dest) {
   });
 }
 function showDescriAndTimeline(arr) {
-  // console.log(arr);
+  console.log(arr);
   let subjects = [];
   if (arr.description) {
     subjects.push("Description");
@@ -1981,15 +1979,15 @@ function updateYears() {
 // -------------------------JUMP-TO-ANOTHER-BTN-ON-TIMELINE--------------------------------
 // ----------------------------------------------------------------------------------------
 
-// const prev = document.querySelector(".prev");
-// const next = document.querySelector(".next");
+const prev = document.querySelector(".prev");
+const next = document.querySelector(".next");
 
-// prev.addEventListener("click", () => {
-//   jumpToAnotherBtn("prev");
-// });
-// next.addEventListener("click", () => {
-//   jumpToAnotherBtn("next");
-// });
+prev.addEventListener("click", () => {
+  jumpToAnotherBtn("prev");
+});
+next.addEventListener("click", () => {
+  jumpToAnotherBtn("next");
+});
 
 // ----------------------------------------------------------------------------------------
 //---------------------JUMP-TO-ANOTHER-BTN-AFTER-CLICK-ARROW-BUTTON------------------------
@@ -2021,3 +2019,22 @@ function jumpToAnotherBtn(btn) {
     centerButton(nextBtn);
   }
 }
+
+window.addEventListener("keydown", function (e) {
+  const index = [...btns].indexOf(currentBtn);
+  let key = e.keyCode;
+  if (key === 39) {
+    const nextBtn = [...btns][index + 1];
+    if (!nextBtn) {
+      return;
+    }
+    centerButton(nextBtn);
+  }
+  if (key === 37) {
+    const nextBtn = [...btns][index - 1];
+    if (!nextBtn) {
+      return;
+    }
+    centerButton(nextBtn);
+  }
+});
