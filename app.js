@@ -325,6 +325,16 @@ async function fetchData() {
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
         );
+        const coordinates = isOnTimelineData
+          .filter((item) => {
+            return item.place.length !== 0;
+          })
+          .map((item) => {
+            const [place] = item.place;
+            const id = item.id;
+            const { latitude, longitude } = place;
+            return L.marker([latitude, longitude], { title: `${id}` });
+          });
 
         const yearsOnTimeline = fetchedData
           .filter((item) => item.is_in_main_timeline)
@@ -346,6 +356,7 @@ async function fetchData() {
         );
 
         setWidthOnMainTimeline();
+        getCoordinates(coordinates);
         createYearBtns(isOnTimelineData, yearsOnTimeline);
         dots.style.display = "none";
         framePointer.style.display = "block";
@@ -362,7 +373,7 @@ async function fetchData() {
         btns.forEach((btn) => {
           if (btn.getAttribute("title") === "-4") {
             centerButton(btn);
-            markerOpen(btn.id);
+            markerOpen(btn.id, coordinates);
           }
         });
       }, 500);
@@ -665,7 +676,7 @@ const maxYear = Math.max(...generateYears);
 
 // const years = range(minYear, maxYear, 50);
 
-const isOnTimelineData = data.filter((item) => item.on_timeline);
+// const isOnTimelineData = data.filter((item) => item.on_timeline);
 
 // const characters = data.filter((item) => item.term_type === "person");
 
@@ -1620,6 +1631,18 @@ L.Routing.errorControl(control).addTo(map);
 // --------------Get-lat-and-lng-from-data-and-put-it-to-another-array------------------
 // -------------------------------------------------------------------------------------
 
+function getCoordinates(coordinates) {
+  for (let i = 0; i < coordinates.length; i++) {
+    coordinates[i].addTo(map);
+  }
+  coordinates.forEach((coord) => {
+    if (coord._latlng.lat === 0 && coord._latlng.lng === 0) {
+      return;
+    }
+    coord.addTo(map);
+  });
+}
+
 const coordinates = isOnTimelineData.map((item) => {
   const { latitude, longitude, id } = item;
   return L.marker([latitude, longitude], { title: `${id}` });
@@ -1636,21 +1659,21 @@ const coordinates = isOnTimelineData.map((item) => {
 // ----------------ADD-MARKERS-TO-MAP----------------------
 // --------------------------------------------------------
 
-for (let i = 0; i < coordinates.length; i++) {
-  coordinates[i].addTo(map);
-}
-coordinates.forEach((coord) => {
-  if (coord._latlng.lat === 0 && coord._latlng.lng === 0) {
-    return;
-  }
-  coord.addTo(map);
-});
+// for (let i = 0; i < coordinates.length; i++) {
+//   coordinates[i].addTo(map);
+// }
+// coordinates.forEach((coord) => {
+//   if (coord._latlng.lat === 0 && coord._latlng.lng === 0) {
+//     return;
+//   }
+//   coord.addTo(map);
+// });
 
 // --------------------------------------------------------
 // --------------MOVE-TO-MARKER-ON-CLICK-------------------
 // --------------------------------------------------------
 
-function markerOpen(id) {
+function markerOpen(id, coordinates) {
   for (let i in coordinates) {
     const markerId = coordinates[i].options.title;
     if (markerId === id) {
