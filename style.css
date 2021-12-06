@@ -241,6 +241,7 @@ body {
   border-radius: 20px;
   padding: 5px;
   letter-spacing: 1px;
+  display: none;
 }
 
 .frame-pointer {
@@ -254,6 +255,7 @@ body {
   transform: translateX(-50%);
   pointer-events: none;
   transition: height 0.5s ease;
+  display: none;
 }
 
 /* .frame::after {
@@ -823,7 +825,8 @@ body {
 
 /* ---------------Loader styles---------------- */
 
-.dots {
+.dots,
+.info {
   width: 3.5em;
   display: flex;
   flex-flow: row nowrap;
@@ -833,6 +836,11 @@ body {
   top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.info {
+  width: 12rem;
+  display: none;
 }
 .dots div {
   width: 0.8em;

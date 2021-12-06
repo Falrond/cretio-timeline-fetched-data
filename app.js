@@ -309,6 +309,9 @@ let zoomLevel = 3;
 // -----------------------------------------------------------------------------------------
 
 const dots = document.querySelector(".dots");
+const infoText = document.querySelector(".info");
+const framePointer = document.querySelector(".frame-pointer");
+const frame = document.querySelector(".frame");
 async function fetchData() {
   try {
     const response = await fetch(
@@ -316,16 +319,8 @@ async function fetchData() {
     );
 
     const fetchedData = await response.json();
-
-    console.log(
-      "-----------------------------------------Fetched Data-------------------------------------------"
-    );
-    console.log(fetchedData);
-    console.log(
-      "------------------------------------------------------------------------------------------------"
-    );
-
-    if (fetchData !== []) {
+    console.log(fetchedData.length);
+    if (fetchedData.length !== 0) {
       setTimeout(() => {
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
@@ -343,15 +338,18 @@ async function fetchData() {
         const rangeOfYears = generateRangeOfYears(fetchedData);
 
         dataFromApi = isOnTimelineData;
-        console.log(yearsOnTimeline);
+        // console.log(yearsOnTimeline);
         addYearsToTimeline(
           rangeOfYears,
           fetchedData,
           detectDuplicates(yearsOnTimeline)
         );
+
         setWidthOnMainTimeline();
         createYearBtns(isOnTimelineData, yearsOnTimeline);
         dots.style.display = "none";
+        framePointer.style.display = "block";
+        frame.style.display = "block";
         lineAfter.style.opacity = "100";
         lineBefore.style.opacity = "100";
         btns = document.querySelectorAll(".btn");
@@ -368,9 +366,15 @@ async function fetchData() {
           }
         });
       }, 500);
+    } else if (fetchedData.length === 0) {
+      setTimeout(() => {
+        dots.style.display = "none";
+        infoText.style.display = "block";
+      }, 500);
     }
   } catch (error) {
     console.log(error);
+    infoText.style.display = "block";
   }
 }
 
@@ -389,8 +393,8 @@ function generateRangeOfYears(data) {
       return start_year;
     })
     .sort((a, b) => a - b);
-  console.log(yearsOnTimeline);
-  console.log(data);
+  // console.log(yearsOnTimeline);
+  // console.log(data);
   const minYear = Math.min(...yearsOnTimeline);
   const maxYear = Math.max(...yearsOnTimeline);
   const rangeOfYears = range(
@@ -416,7 +420,7 @@ function detectDuplicates(yearsOnTimeline) {
     }
   });
   duplicates = [...new Set(duplicates)];
-  console.log(duplicates);
+
   return duplicates;
 }
 
@@ -447,6 +451,7 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
       let closestHigherYear = Math.min(
         ...rangeOfYears.filter((num) => num > item)
       );
+
       // console.log(`for ${item} the closesthigheryear is${closestHigherYear}`);
       // console.log(`for number ${item} the lower value is ${closestLowerYear}`);
       if (closestLowerYear === year) {
@@ -455,11 +460,11 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
       if (yearsOnTimeline[index - 1]) {
         if (Math.abs(yearsOnTimeline[index - 1] - item) < 5) {
           if (closestHigherYear === year) {
-            console.log(
-              `${yearsOnTimeline[index - 1]}, ${item} = ${Math.abs(
-                yearsOnTimeline[index - 1] - item
-              )}`
-            );
+            // console.log(
+            //   `${yearsOnTimeline[index - 1]}, ${item} = ${Math.abs(
+            //     yearsOnTimeline[index - 1] - item
+            //   )}`
+            // );
             higherYears.push(year);
           }
         }
@@ -525,7 +530,7 @@ const range = (minYear, maxYear, numRange, duplicates) => {
     }
   });
   range = [...new Set(range)];
-  console.log(range);
+  // console.log(range);
   range.sort((a, b) => a - b);
 
   return range;
@@ -550,7 +555,7 @@ function createYearBtns(timelineData) {
   });
   console.log(mainYearsNum);
   console.log(mainYearsNum[mainYearsNum.length - 1]);
-  console.log(timelineData);
+  // console.log(timelineData);
   const sortedData = timelineData.slice(0).sort((a, b) => {
     return a.date[0].start_year - b.date[0].start_year;
   });
@@ -749,7 +754,6 @@ const timeline = document.querySelector(".timeline");
 const times = document.querySelectorAll(".time");
 const windowCenter = window.innerWidth / 2;
 
-const frame = document.querySelector(".frame");
 const mapContainer = document.querySelector(
   ".map-container:not(.sliding-header)"
 );
@@ -892,7 +896,7 @@ function updateYear() {
   }
   const leftValue = +leftRange[leftRange.length - 1].innerHTML;
   let frameValue;
-  // let rightValue;
+  let rightValue;
   const rightRange = times[leftRange.length];
   // console.log(rightRange);
 
@@ -1254,6 +1258,7 @@ function showRelated(arr) {
     }
     `;
     relatedBtnContainer.appendChild(typeBtn);
+
     if (index === 0 && type === "person") {
       const characters = relatesData.filter(
         (item) => item.term_type === "person"
@@ -1565,7 +1570,7 @@ closeBtn.addEventListener("click", () => {
 // ----------------------------LEAFLET-MAP-----------------------------
 // --------------------------------------------------------------------
 
-let zoom = 11;
+let zoom = 8;
 let lat = 31.78246584395653;
 let lon = 35.22766113281251;
 
@@ -1798,7 +1803,7 @@ function slideCenterHeader(currentSub) {
       )
     );
 
-    console.log(relatesNum.length);
+    // console.log(relatesNum.length);
 
     // console.log(relatesNum);
 
