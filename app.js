@@ -1,4 +1,4 @@
-let data = [
+let dataExample = [
   {
     id: 1,
     title: "Adam and Eve",
@@ -269,6 +269,10 @@ let data = [
 ];
 
 let dataFromApi;
+let coord;
+let data;
+let isData = false;
+// let years;
 
 // -----------------------------------------------------------------------------------------
 // ------------------------------------Query-Selector-Elements------------------------------
@@ -321,10 +325,14 @@ async function fetchData() {
     const fetchedData = await response.json();
     console.log(fetchedData.length);
     if (fetchedData.length !== 0) {
+      isData = true;
       setTimeout(() => {
+        // ----------filter-on-timline-data------------------
         const isOnTimelineData = fetchedData.filter(
           (item) => item.is_in_main_timeline
         );
+        data = fetchedData;
+        // ----------filter-objects-with-place-and-make-coordinates--
         const coordinates = isOnTimelineData
           .filter((item) => {
             return item.place.length !== 0;
@@ -336,6 +344,8 @@ async function fetchData() {
             return L.marker([latitude, longitude], { title: `${id}` });
           });
 
+        coord = coordinates;
+
         const yearsOnTimeline = fetchedData
           .filter((item) => item.is_in_main_timeline)
           .map((item) => {
@@ -346,7 +356,7 @@ async function fetchData() {
           .sort((a, b) => a - b);
 
         const rangeOfYears = generateRangeOfYears(fetchedData);
-
+        // years = rangeOfYears;
         dataFromApi = isOnTimelineData;
         // console.log(yearsOnTimeline);
         addYearsToTimeline(
@@ -354,15 +364,18 @@ async function fetchData() {
           fetchedData,
           detectDuplicates(yearsOnTimeline)
         );
-
+        // ----------------set-width-on-main-timeline-----------------
         setWidthOnMainTimeline();
         getCoordinates(coordinates);
         createYearBtns(isOnTimelineData, yearsOnTimeline);
+
         dots.style.display = "none";
         framePointer.style.display = "block";
         frame.style.display = "block";
         lineAfter.style.opacity = "100";
         lineBefore.style.opacity = "100";
+
+        //-----------------set-for-each-btn-centerbtn-fucntion
         btns = document.querySelectorAll(".btn");
         btns.forEach((btn) => {
           btn.addEventListener("mouseup", (e) => {
@@ -370,6 +383,37 @@ async function fetchData() {
             centerButton(btn);
           });
         });
+
+        // --------------------------------------------------------
+        // -----------ADD-FUNCTIONS-TO-BTNS-IN-TIMELINE------------
+        // --------------------------------------------------------
+
+        btns.forEach((marker) => {
+          marker.addEventListener("mouseup", () => {
+            markerOpen(marker.id, coordinates);
+          });
+        });
+
+        // --------------------------------------------------------
+        //------------ADD-FUNCTIONS-TO-MARKERS-IN-MAP--------------
+        // --------------------------------------------------------
+
+        const markers = document.querySelectorAll(".leaflet-marker-icon");
+        markers.forEach((marker) => {
+          marker.addEventListener("click", () => {
+            btns.forEach((btn) => {
+              if (marker.title === btn.id) {
+                centerButton(btn);
+                markerOpen(btn.id, coordinates);
+              }
+            });
+          });
+        });
+
+        // --------------------------------------------------------
+        // -------------------set-default-focus-btn----------------
+        // --------------------------------------------------------
+
         btns.forEach((btn) => {
           if (btn.getAttribute("title") === "-4") {
             centerButton(btn);
@@ -378,6 +422,7 @@ async function fetchData() {
         });
       }, 500);
     } else if (fetchedData.length === 0) {
+      isData = false;
       setTimeout(() => {
         dots.style.display = "none";
         infoText.style.display = "block";
@@ -465,6 +510,7 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
 
       // console.log(`for ${item} the closesthigheryear is${closestHigherYear}`);
       // console.log(`for number ${item} the lower value is ${closestLowerYear}`);
+
       if (closestLowerYear === year) {
         lowerYears.push(year);
       }
@@ -668,11 +714,11 @@ function createYearBtns(timelineData) {
 // ------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------
 
-const generateYears = data
-  .filter((item) => item.on_timeline)
-  .map((item) => item.date);
-const minYear = Math.min(...generateYears);
-const maxYear = Math.max(...generateYears);
+// const generateYears = data
+//   .filter((item) => item.on_timeline)
+//   .map((item) => item.date);
+// const minYear = Math.min(...generateYears);
+// const maxYear = Math.max(...generateYears);
 
 // const years = range(minYear, maxYear, 50);
 
@@ -909,10 +955,9 @@ function updateYear() {
   let frameValue;
   let rightValue;
   const rightRange = times[leftRange.length];
-  // console.log(rightRange);
 
-  if (!rightRange) {
-    frameValue = years[years.length - 1].innerHTML;
+  if (rightRange == null) {
+    rightValue = +leftRange[leftRange.length - 1].innerHTML;
   } else {
     rightValue = +rightRange.innerHTML;
   }
@@ -1054,6 +1099,8 @@ function getClosestButton() {
     return;
   }
 
+  console.log(coord);
+
   const windowCenterX = window.innerWidth / 2;
 
   const btnsArr = Array.from(btns);
@@ -1090,13 +1137,13 @@ function getClosestButton() {
 
   if (!rightBtns[0]) {
     centerButton(leftBtns[0]);
-    markerOpen(leftBtns[0].id);
+    markerOpen(leftBtns[0].id, coord);
     return;
   }
 
   if (!leftBtns[0]) {
     centerButton(rightBtns[0]);
-    markerOpen(rightBtns[0].id);
+    markerOpen(rightBtns[0].id, coord);
     return;
   }
   const rightButtonRect = rightBtns[0].getBoundingClientRect();
@@ -1106,13 +1153,13 @@ function getClosestButton() {
     windowCenterX - leftButtonRect.right
   ) {
     centerButton(leftBtns[0]);
-    markerOpen(leftBtns[0].id);
+    markerOpen(leftBtns[0].id, coord);
   } else if (
     rightButtonRect.left - windowCenterX <
     windowCenterX - leftButtonRect.right
   ) {
     centerButton(rightBtns[0]);
-    markerOpen(rightBtns[0].id);
+    markerOpen(rightBtns[0].id, coord);
   }
 }
 
@@ -1127,6 +1174,8 @@ slidingHeader.addEventListener("click", () => {
   ) {
     slidingHeader.classList.remove("up");
     setBottom();
+  } else if (!isData) {
+    return;
   } else {
     slidingHeader.classList.add("up");
   }
@@ -1180,10 +1229,11 @@ slidingHeader.addEventListener("click", () => {
 //---------------------------------------------------------------------------
 
 function updateSidePanel() {
+  console.log(data);
   const [currentSubject] = data.filter((item) => item.id === +currentBtn.id);
-  // console.log(currentSubject);
+  console.log(currentSubject);
   sidePanelContainer = currentSubject;
-  // console.log(sidePanelContainer);
+  console.log(sidePanelContainer);
 
   slidingPanelHeader.classList.remove("show");
   slidingPanelText.classList.remove("show");
@@ -1248,7 +1298,7 @@ function showRelated(arr) {
 
   // show term_type from relates
   const types = [...new Set(relatesData.map((item) => item.term_type))].sort();
-  // console.log(types);
+  console.log(types);
 
   types.forEach((type, index) => {
     const typeBtn = document.createElement("button");
@@ -1265,7 +1315,7 @@ function showRelated(arr) {
               ? "map-marker"
               : "book"
           }"></i> ${
-      type === "person" ? "Characters" : type === "place" ? "Places" : "Topics"
+      type === "person" ? "Characters" : type === "place" ? "Places" : "Events"
     }
     `;
     relatedBtnContainer.appendChild(typeBtn);
@@ -1284,6 +1334,10 @@ function showRelated(arr) {
     if (index === 0 && type === "topic") {
       const topics = relatesData.filter((item) => item.term_type === "topic");
       createRelated(topics, relatedDiv);
+    }
+    if (index === 0 && type === "event") {
+      const events = relatesData.filter((item) => item.term_type === "event");
+      createRelated(events, relatedDiv);
     }
 
     typeBtn.addEventListener("click", () => {
@@ -1310,6 +1364,11 @@ function showRelated(arr) {
         const topics = relatesData.filter((item) => item.term_type === "topic");
         createRelated(topics, relatedDiv);
       }
+      if (typeBtn.innerText === "Events") {
+        relatedDiv.innerHTML = "";
+        const events = relatesData.filter((item) => item.term_type === "event");
+        createRelated(events, relatedDiv);
+      }
     });
   });
 }
@@ -1317,7 +1376,6 @@ function showRelated(arr) {
 function createRelated(arr, dest) {
   arr.forEach((item, index) => {
     // ----------------------------------------------------------------
-
     const elem = document.createElement("div");
     elem.id = item.id;
 
@@ -1581,7 +1639,7 @@ closeBtn.addEventListener("click", () => {
 // ----------------------------LEAFLET-MAP-----------------------------
 // --------------------------------------------------------------------
 
-let zoom = 8;
+let zoom = 11;
 let lat = 31.78246584395653;
 let lon = 35.22766113281251;
 
@@ -1643,10 +1701,10 @@ function getCoordinates(coordinates) {
   });
 }
 
-const coordinates = isOnTimelineData.map((item) => {
-  const { latitude, longitude, id } = item;
-  return L.marker([latitude, longitude], { title: `${id}` });
-});
+// const coordinates = isOnTimelineData.map((item) => {
+//   const { latitude, longitude, id } = item;
+//   return L.marker([latitude, longitude], { title: `${id}` });
+// });
 
 // btns.forEach((btn) => {
 //   if (btn.getAttribute("title") === "-4") {
@@ -1704,9 +1762,9 @@ function centerMarker(latlng) {
 // ----------------------------------------------------------------------------------------
 
 let polylinePoints = [
+  [31.703056, 35.195556],
   [32.706786, 35.194556],
-  [31.770011, 35.224564],
-  [32.17967, 35.678333],
+  [39.7, 44.28],
 ];
 
 // console.log(polylinePoints);
@@ -1748,33 +1806,33 @@ polyline.setStyle({
 // -----------ADD-FUNCTIONS-TO-BTNS-IN-TIMELINE------------
 // --------------------------------------------------------
 
-window.addEventListener("DOMContentLoaded", () => {
-  const markersDiv = document.querySelectorAll(".btn");
+// window.addEventListener("DOMContentLoaded", () => {
+//   const markersDiv = document.querySelectorAll(".btn");
 
-  markersDiv.forEach((marker) => {
-    marker.addEventListener("mouseup", () => {
-      markerOpen(marker.id);
-    });
-  });
-});
+//   markersDiv.forEach((marker) => {
+//     marker.addEventListener("mouseup", () => {
+//       markerOpen(marker.id);
+//     });
+//   });
+// });
 
 // --------------------------------------------------------
 //------------ADD-FUNCTIONS-TO-MARKERS-IN-MAP--------------
 // --------------------------------------------------------
 
-window.addEventListener("DOMContentLoaded", () => {
-  const markers = document.querySelectorAll(".leaflet-marker-icon");
-  markers.forEach((marker) => {
-    marker.addEventListener("click", () => {
-      btns.forEach((btn) => {
-        if (marker.title === btn.id) {
-          centerButton(btn);
-          markerOpen(btn.id);
-        }
-      });
-    });
-  });
-});
+// window.addEventListener("DOMContentLoaded", () => {
+//   const markers = document.querySelectorAll(".leaflet-marker-icon");
+//   markers.forEach((marker) => {
+//     marker.addEventListener("click", () => {
+//       btns.forEach((btn) => {
+//         if (marker.title === btn.id) {
+//           centerButton(btn);
+//           markerOpen(btn.id);
+//         }
+//       });
+//     });
+//   });
+// });
 
 // ------------------------------------------------------------------------------------
 // ------------------------------CONVERT-AGE-TO-PIXEL----------------------------------
