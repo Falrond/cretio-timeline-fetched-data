@@ -1435,7 +1435,7 @@ function showDescriAndTimeline(arr) {
   if (arr.relates && arr.relates.length !== 0) {
     subjects.push("Timeline");
   }
-  // console.log(subjects);
+
   slidingPanelButtons.innerHTML = "";
   subjects.forEach((sub, index) => {
     const btn = document.createElement("button");
