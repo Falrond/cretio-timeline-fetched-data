@@ -415,7 +415,7 @@ async function fetchData() {
         // --------------------------------------------------------
 
         btns.forEach((btn) => {
-          if (btn.getAttribute("title") === "-4") {
+          if (btn.getAttribute("title") === "33") {
             centerButton(btn);
             markerOpen(btn.id, coordinates);
           }
