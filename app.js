@@ -319,7 +319,8 @@ const frame = document.querySelector(".frame");
 async function fetchData() {
   try {
     const response = await fetch(
-      "https://cretio.atechno.pl/data/terms/?format=json"
+      // "https://cretio.atechno.pl/data/terms/?format=json"
+      "http://127.0.0.1:8000/data/terms/?format=json"
     );
 
     const fetchedData = await response.json();
@@ -335,10 +336,13 @@ async function fetchData() {
         // ----------filter-objects-with-place-and-make-coordinates--
         const coordinates = isOnTimelineData
           .filter((item) => {
-            return item.place.length !== 0;
+            console.log(item.place);
+            return item.place !== null;
           })
           .map((item) => {
-            const [place] = item.place;
+            const [place] = Array.isArray(item.place)
+              ? item.place
+              : [item.place];
             const id = item.id;
             const { latitude, longitude } = place;
             return L.marker([latitude, longitude], { title: `${id}` });
@@ -349,12 +353,12 @@ async function fetchData() {
         const yearsOnTimeline = fetchedData
           .filter((item) => item.is_in_main_timeline)
           .map((item) => {
-            const [date] = item.date;
+            const [date] = Array.isArray(item.date) ? item.date : [item.date];
             const { start_year } = date;
             return start_year;
           })
           .sort((a, b) => a - b);
-
+        console.log(yearsOnTimeline);
         const rangeOfYears = generateRangeOfYears(fetchedData);
         // years = rangeOfYears;
         dataFromApi = isOnTimelineData;
@@ -413,9 +417,10 @@ async function fetchData() {
         // --------------------------------------------------------
         // -------------------set-default-focus-btn----------------
         // --------------------------------------------------------
-
+        const randomNumber = randomYear(yearsOnTimeline);
+        console.log(randomNumber);
         btns.forEach((btn) => {
-          if (btn.getAttribute("title") === "33") {
+          if (btn.getAttribute("title") === `${randomNumber}`) {
             centerButton(btn);
             markerOpen(btn.id, coordinates);
           }
@@ -436,6 +441,9 @@ async function fetchData() {
 
 fetchData();
 
+function randomYear(years) {
+  return years[Math.floor(Math.random() * years.length)];
+}
 // ------------------------------------------------------------------------------------
 // --------------------------Generate-range-of-years-from-fetch-data-------------------
 // ------------------------------------------------------------------------------------
@@ -444,7 +452,7 @@ function generateRangeOfYears(data) {
   const yearsOnTimeline = data
     .filter((item) => item.is_in_main_timeline)
     .map((item) => {
-      const [date] = item.date;
+      const [date] = Array.isArray(item.date) ? item.date : [item.date];
       const { start_year } = date;
       return start_year;
     })
@@ -488,7 +496,7 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
   const yearsOnTimeline = data
     .filter((item) => item.is_in_main_timeline)
     .map((item) => {
-      const [date] = item.date;
+      const [date] = Array.isArray(item.date) ? item.date : [item.date];
       const { start_year } = date;
       return start_year;
     })
@@ -540,8 +548,9 @@ function addYearsToTimeline(rangeOfYears, data, duplicates) {
     ) {
       const span = document.createElement("span");
       span.classList.add("year-label");
-      span.innerHTML = `<time class="time">${year}</time>`;
-
+      span.innerHTML = `
+      <time class="time" data-year=${year}>${year}</time>`;
+      // year === 0 ? 0 : year < 0 ? Math.abs(year) + " BC" : year + " AC"
       span.style.width = `${zoomLevel * 80}px`;
       // change length of span depends on quantity of years
       // + (lowerYears.length > 1 ? lowerYears.length * 50 : 0)
@@ -608,18 +617,26 @@ function createYearBtns(timelineData) {
   const mainYears = document.querySelectorAll(".year-label");
 
   const mainYearsNum = [...mainYears].map((item) => {
+    console.log(
+      item.innerText.includes("BC")
+        ? -Math.abs(item.innerText.slice(0, -2))
+        : item.innerText == 0
+        ? 0
+        : +item.innerText.slice(0, -2)
+    );
+    console.log(item.children[0].getAttribute("data-year"));
     return +item.innerText;
   });
   console.log(mainYearsNum);
   console.log(mainYearsNum[mainYearsNum.length - 1]);
   // console.log(timelineData);
   const sortedData = timelineData.slice(0).sort((a, b) => {
-    return a.date[0].start_year - b.date[0].start_year;
+    return a.date.start_year - b.date.start_year;
   });
   let counter = 0;
   console.log(sortedData);
   sortedData.forEach((item, index) => {
-    const [dateObject] = item.date;
+    const [dateObject] = Array.isArray(item.date) ? item.date : [item.date];
     const { start_year } = dateObject;
     const highestYear = mainYearsNum.find((elem) => elem > start_year)
       ? mainYearsNum.find((elem) => elem > start_year)
@@ -673,7 +690,9 @@ function createYearBtns(timelineData) {
     btn.setAttribute("title", start_year);
 
     if (sortedData[index - 1]) {
-      const [prevDataObject] = sortedData[index - 1].date;
+      const [prevDataObject] = Array.isArray(sortedData[index - 1].date)
+        ? sortedData[index - 1].date
+        : [sortedData[index - 1].date];
       const { start_year: prevStartYear } = prevDataObject;
       if (prevStartYear !== start_year) {
         counter = 0;
@@ -1396,8 +1415,10 @@ function createRelated(arr, dest) {
       checkIsTrue();
 
       const [relatedBtnData] = data.filter((i) => i.id === item.id);
+      // console.log(relatedBtnContainer);
 
       sidePanelContainer = relatedBtnData;
+
       // showRelated(sidePanelContainer.relates);
       console.log(sidePanelContainer);
 
@@ -1429,10 +1450,11 @@ function createRelated(arr, dest) {
 function showDescriAndTimeline(arr) {
   console.log(arr);
   let subjects = [];
+
   if (arr.description) {
     subjects.push("Description");
   }
-  if (arr.relates && arr.relates.length !== 0) {
+  if (arr.relates && arr.relates.length !== 0 && arr.term_type == "person") {
     subjects.push("Timeline");
   }
 
@@ -1457,18 +1479,60 @@ function showDescriAndTimeline(arr) {
         slidingPanelText.innerText = arr.description;
       }
       if (btn.innerText === "Timeline") {
+        let relateEvents = [];
+        arr.relates.forEach((item) => {
+          data.forEach((i) => {
+            if (i.id === item && i.term_type === "event") {
+              relateEvents.push(i);
+            }
+          });
+        });
+
+        relateEvents.sort((a, b) => {
+          const [dateA] = a.date;
+          const [dateB] = b.date;
+          const startA = dateA.start_year;
+          const startB = dateB.start_year;
+          return startA - startB;
+        });
+        console.log(relateEvents);
+        const sideTimeline = document.createElement("div");
+        sideTimeline.classList.add("sideTimeline");
+        const sideTimelineTitle = document.createElement("div");
+        sideTimelineTitle.classList.add("sideTimelineTitle");
+        sideTimelineTitle.innerText = "History";
+
         slidingPanelText.innerHTML = "";
-        console.log(arr.relates);
+        slidingPanelText.appendChild(sideTimelineTitle);
+        relateEvents.forEach((item) => {
+          const timelineItem = document.createElement("div");
+          timelineItem.classList.add("timelineItem");
 
-        const relatedEvents = data
-          .filter((event) => {
-            return event.relates && event.relates.includes(arr.id);
-          })
-          .filter((item) => item.date)
-          .map((item) => item.date);
+          const timelineItemYear = document.createElement("div");
+          timelineItemYear.classList.add("timelineItemYear");
 
-        console.log(arr.id);
-        console.log(relatedEvents);
+          const timelineItemTitle = document.createElement("div");
+          timelineItemTitle.classList.add("timelineItemTitle");
+
+          const [date] = item.date;
+          const { start_year } = date;
+          console.log(start_year);
+          timelineItemYear.innerText = `${
+            start_year === 0
+              ? 0
+              : start_year < 0
+              ? Math.abs(start_year) + " BC"
+              : start_year + " AD"
+          }`;
+          timelineItemTitle.innerText = item.title;
+
+          timelineItem.appendChild(timelineItemYear);
+          timelineItem.appendChild(timelineItemTitle);
+
+          sideTimeline.appendChild(timelineItem);
+        });
+
+        slidingPanelText.appendChild(sideTimeline);
       }
     });
     slidingPanelText.innerText = arr.description;
@@ -1888,19 +1952,19 @@ function slideCenterHeader(currentSub) {
 
     // console.log(relatesNum);
 
-    if (relatesNum.length === 3 || relatesNum.length > 3) {
-      slidingHeader.classList.add("up-3");
-    }
-    if (relatesNum.length === 2) {
-      slidingHeader.classList.add("up-2");
-    }
-    if (relatesNum.length === 1) {
+    // if (relatesNum.length === 3 || relatesNum.length > 3) {
+    //   slidingHeader.classList.add("up-3");
+    // }
+    // if (relatesNum.length === 2) {
+    //   slidingHeader.classList.add("up-2");
+    // }
+    if (relatesNum.length < 1) {
       slidingHeader.classList.add("up-1");
     }
-    if (relatesNum.length === 0) {
-      slidingHeader.classList.add("up");
-    }
-  } else {
+    // if (relatesNum.length === 0) {
+    //   slidingHeader.classList.add("up");
+    // }
+    // } else {
     slidingHeader.classList.add("up");
   }
 }
