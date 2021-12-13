@@ -281,7 +281,7 @@ body {
   background-color: #fff;
   position: absolute;
   left: 50%;
-  bottom: 0;
+  bottom: 25px;
   border-top-left-radius: 30px;
   border-top-right-radius: 30px;
   transform: translateX(-50%);

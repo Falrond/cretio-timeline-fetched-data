@@ -272,7 +272,7 @@ let dataFromApi;
 let coord;
 let data;
 let isData = false;
-// let years;
+let years;
 
 // -----------------------------------------------------------------------------------------
 // ------------------------------------Query-Selector-Elements------------------------------
@@ -319,8 +319,8 @@ const frame = document.querySelector(".frame");
 async function fetchData() {
   try {
     const response = await fetch(
-      // "https://cretio.atechno.pl/data/terms/?format=json"
-      "http://127.0.0.1:8000/data/terms/?format=json"
+      "https://cretio.atechno.pl/data/terms/?format=json"
+      // "http://127.0.0.1:8000/data/terms/?format=json"
     );
 
     const fetchedData = await response.json();
@@ -360,7 +360,7 @@ async function fetchData() {
           .sort((a, b) => a - b);
         console.log(yearsOnTimeline);
         const rangeOfYears = generateRangeOfYears(fetchedData);
-        // years = rangeOfYears;
+        years = rangeOfYears;
         dataFromApi = isOnTimelineData;
         // console.log(yearsOnTimeline);
         addYearsToTimeline(
@@ -617,18 +617,18 @@ function createYearBtns(timelineData) {
   const mainYears = document.querySelectorAll(".year-label");
 
   const mainYearsNum = [...mainYears].map((item) => {
-    console.log(
-      item.innerText.includes("BC")
-        ? -Math.abs(item.innerText.slice(0, -2))
-        : item.innerText == 0
-        ? 0
-        : +item.innerText.slice(0, -2)
-    );
-    console.log(item.children[0].getAttribute("data-year"));
+    // console.log(
+    //   item.innerText.includes("BC")
+    //     ? -Math.abs(item.innerText.slice(0, -2))
+    //     : item.innerText == 0
+    //     ? 0
+    //     : +item.innerText.slice(0, -2)
+    // );
+    // console.log(item.children[0].getAttribute("data-year"));
     return +item.innerText;
   });
-  console.log(mainYearsNum);
-  console.log(mainYearsNum[mainYearsNum.length - 1]);
+  // console.log(mainYearsNum);
+  // console.log(mainYearsNum[mainYearsNum.length - 1]);
   // console.log(timelineData);
   const sortedData = timelineData.slice(0).sort((a, b) => {
     return a.date.start_year - b.date.start_year;
@@ -1088,7 +1088,7 @@ function centerButton(btn) {
   setTimeout(() => {
     slideCenterHeader(currentSubject);
   }, 500);
-  // generateTimelines(currentSubject);
+  generateTimelines(currentSubject);
 }
 
 // ------------------------------------------------------
@@ -1230,7 +1230,7 @@ slidingHeader.addEventListener("click", () => {
     slidingPanelHeader.innerText = currentSubject.title;
     slidingPanelText.innerText = currentSubject.description;
     relatedDiv.innerHTML = "";
-
+    showDescriAndTimeline(currentSubject);
     if (currentSubject.relates) {
       showRelated(currentSubject.relates);
     } else {
@@ -1468,13 +1468,14 @@ function showDescriAndTimeline(arr) {
     }
     slidingPanelButtons.appendChild(btn);
     slidingPanelHeader.innerText = arr.title;
+
     btn.addEventListener("click", () => {
       document
         .querySelectorAll(".sidePanelBtn")
         .forEach((btn) => btn.classList.remove("active"));
       btn.classList.add("active");
 
-      if (btn.innerText === "Description") {
+      if (btn.innerText === "Description" && arr.description !== "") {
         slidingPanelText.innerHTML = "";
         slidingPanelText.innerText = arr.description;
       }
@@ -1489,8 +1490,8 @@ function showDescriAndTimeline(arr) {
         });
 
         relateEvents.sort((a, b) => {
-          const [dateA] = a.date;
-          const [dateB] = b.date;
+          const dateA = a.date;
+          const dateB = b.date;
           const startA = dateA.start_year;
           const startB = dateB.start_year;
           return startA - startB;
@@ -1503,7 +1504,7 @@ function showDescriAndTimeline(arr) {
         sideTimelineTitle.innerText = "History";
 
         slidingPanelText.innerHTML = "";
-        slidingPanelText.appendChild(sideTimelineTitle);
+        // slidingPanelText.appendChild(sideTimelineTitle);
         relateEvents.forEach((item) => {
           const timelineItem = document.createElement("div");
           timelineItem.classList.add("timelineItem");
@@ -1514,7 +1515,7 @@ function showDescriAndTimeline(arr) {
           const timelineItemTitle = document.createElement("div");
           timelineItemTitle.classList.add("timelineItemTitle");
 
-          const [date] = item.date;
+          const date = item.date;
           const { start_year } = date;
           console.log(start_year);
           timelineItemYear.innerText = `${
@@ -1535,7 +1536,64 @@ function showDescriAndTimeline(arr) {
         slidingPanelText.appendChild(sideTimeline);
       }
     });
-    slidingPanelText.innerText = arr.description;
+    if (arr.description !== "") {
+      slidingPanelText.innerText = arr.description;
+    } else {
+      let relateEvents = [];
+      arr.relates.forEach((item) => {
+        data.forEach((i) => {
+          if (i.id === item && i.term_type === "event") {
+            relateEvents.push(i);
+          }
+        });
+      });
+
+      relateEvents.sort((a, b) => {
+        const dateA = a.date;
+        const dateB = b.date;
+        const startA = dateA.start_year;
+        const startB = dateB.start_year;
+        return startA - startB;
+      });
+      console.log(relateEvents);
+      const sideTimeline = document.createElement("div");
+      sideTimeline.classList.add("sideTimeline");
+      const sideTimelineTitle = document.createElement("div");
+      sideTimelineTitle.classList.add("sideTimelineTitle");
+      sideTimelineTitle.innerText = "History";
+
+      slidingPanelText.innerHTML = "";
+      // slidingPanelText.appendChild(sideTimelineTitle);
+      relateEvents.forEach((item) => {
+        const timelineItem = document.createElement("div");
+        timelineItem.classList.add("timelineItem");
+
+        const timelineItemYear = document.createElement("div");
+        timelineItemYear.classList.add("timelineItemYear");
+
+        const timelineItemTitle = document.createElement("div");
+        timelineItemTitle.classList.add("timelineItemTitle");
+
+        const date = item.date;
+        const { start_year } = date;
+        console.log(start_year);
+        timelineItemYear.innerText = `${
+          start_year === 0
+            ? 0
+            : start_year < 0
+            ? Math.abs(start_year) + " BC"
+            : start_year + " AD"
+        }`;
+        timelineItemTitle.innerText = item.title;
+
+        timelineItem.appendChild(timelineItemYear);
+        timelineItem.appendChild(timelineItemTitle);
+
+        sideTimeline.appendChild(timelineItem);
+      });
+
+      slidingPanelText.appendChild(sideTimeline);
+    }
   });
 }
 
@@ -1590,14 +1648,6 @@ const additionalTimelinesContainer = document.querySelector(
 // ----------------------------------------------------------------------------------------------
 
 function generateTimelines(event) {
-  if (!event.relates) {
-    // additionalTimelinesContainer.innerHTML = "";
-    additionalTimelinesContainer.style.height = "1px";
-    // additionalTimelinesContainer.style.opacity = "0";
-
-    document.querySelector(".frame-pointer").style.height = `41px`;
-    return;
-  }
   if (event.relates.length === 0) {
     additionalTimelinesContainer.style.height = "1px";
     document.querySelector(".frame-pointer").style.height = `41px`;
@@ -1612,12 +1662,26 @@ function generateTimelines(event) {
     relatedData.push(
       ...data
         .filter((i) => i.id === item)
-        .filter((item) => item.start_date && item.end_date)
-        .map((item) => item.id)
+        .filter((i) => i.term_type === "person")
+        .filter((i) => {
+          return i.date;
+        })
+        .filter((i) => {
+          const date = i.date;
+          console.log(date);
+          return date.start_year && date.end_year;
+        })
+        .map((item) => {
+          return {
+            id: item.id,
+            date: item.date,
+            title: item.title,
+          };
+        })
     );
   });
 
-  // console.log(relatedData);
+  console.log(relatedData);
   // if (relatedData.length === 0) {
   //   // additionalTimelinesContainer.style.height = "0px";
 
@@ -1626,33 +1690,36 @@ function generateTimelines(event) {
 
   relatedData.slice(0, 3).forEach((relate, index) => {
     //------------------return-every-item-where-id-is-included----------------------
+    const { date, id, title } = relate;
+    // const relatedEvents = data.filter((event) => {
+    //   return event.is_in_main_timeline && event.relates.includes(relate);
+    // });
 
-    const relatedEvents = data.filter((event) => {
-      return event.relates && event.relates.includes(relate);
-    });
-
-    // console.log(relatedEvents);
-    // console.log(event);
-
-    const dates = relatedEvents
-      .map((i) => i.date)
-      .sort((a, b) => a - b)
-      .filter((i) => i);
+    // const dates = relatedEvents
+    //   .filter((i) => i.date)
+    //   .map((i) => i.date)
+    //   .sort((a, b) => {
+    //     a.start_year - b.start_year;
+    //   });
     // console.log(dates);
+    // const [object] = data.filter((i) => i.id === relate);
+    // console.log(object);
+    // const date = object.date;
+    // console.log(date);
 
-    const [object] = data.filter((i) => i.id === relate);
-    if (!object.start_date && !object.end_date) {
-      return;
-    }
-    const startDate =
-      object.start_date < dates[0] ? object.start_date : dates[0];
+    const startDate = date.start_year;
 
-    const endDate =
-      object.end_date > dates[dates.length - 1]
-        ? object.end_date
-        : dates[dates.length - 1];
+    // date.start_year <= dates[0].start_year
+    // ? date.start_year
+    // : dates[0].start_year;
 
-    // createTimeline(startDate, endDate, index, object.id);
+    const endDate = date.end_year;
+
+    // date.end_year >= dates[dates.length - 1].end_year
+    // ? date.end_year
+    // : dates[dates.length - 1].end_year;
+    console.log(title);
+    createTimeline(startDate, endDate, index, id);
   });
 }
 
@@ -1665,9 +1732,13 @@ function createTimeline(start, end, index, id) {
   line.classList.add("additional-timeline");
   line.classList.add(`line-${index + 1}`);
   line.id = id;
-  line.style.left = `${agetoPixelConversion(start, years)}px`;
+  console.log(start);
+  console.log(end);
+  console.log(agetoPixelConversion(start));
+  console.log(agetoPixelConversion(end));
+  line.style.left = `${agetoPixelConversion(start)}px`;
   line.style.width = `${
-    agetoPixelConversion(end, years) - agetoPixelConversion(start, years)
+    agetoPixelConversion(end) - agetoPixelConversion(start)
   }px`;
 
   // setTimeout(() => {
@@ -1682,7 +1753,7 @@ function createTimeline(start, end, index, id) {
     pointerHeight + (index + 1) * 20
   }px`;
 
-  //   slidingHeader.style.bottom = `${(index + 1) * 35}px`;
+  slidingHeader.style.bottom = `${(index + 1) * 35}px`;
 }
 
 const closeBtn = document.querySelector(".closeBtn");
@@ -1902,36 +1973,75 @@ polyline.setStyle({
 // ------------------------------CONVERT-AGE-TO-PIXEL----------------------------------
 // ------------------------------------------------------------------------------------
 
-function agetoPixelConversion(year, yearArr) {
-  const highestYear = yearArr.find((elem) => elem > year);
-  const lowerYear = yearArr[yearArr.indexOf(highestYear) - 1];
-
+function agetoPixelConversion(year) {
   const mainYears = document.querySelectorAll(".year-label");
 
+  const mainYearsNum = [...mainYears].map((item) => {
+    return +item.innerText;
+  });
+
+  console.log(mainYearsNum);
+  console.log("Year: " + year);
+
+  // isNaN(
+  //   Math.max(mainYearsNum.filter((num) => num <= year))
+  // )
+  //   ? mainYearsNum[0]
+  //   :
+
+  let minNum = mainYearsNum.filter((num) => num <= year).sort((a, b) => a - b);
+  let maxNum = mainYearsNum.filter((num) => num > year).sort((a, b) => a - b);
+  console.log(minNum);
+  console.log(maxNum);
+
+  let closestLYear =
+    minNum.length > 0 ? minNum[minNum.length - 1] : mainYearsNum[0];
+
+  let closestHYear =
+    maxNum.length > 0 ? maxNum[0] : mainYearsNum[mainYearsNum.length - 1];
+
+  console.log(closestLYear);
+  console.log(closestHYear);
+
   const lowYear = [...mainYears].filter((elem) => {
-    if (+elem.children[0].innerText === lowerYear) {
-      return year;
+    if (+elem.children[0].innerText === closestLYear) {
+      return elem;
     }
   })[0].children[0];
-
+  console.log(lowYear);
   const highYear = [...mainYears].filter((elem) => {
-    if (+elem.children[0].innerText === highestYear) {
-      return year;
+    if (+elem.children[0].innerText === closestHYear) {
+      return elem;
     }
   })[0].children[0];
 
+  console.log(highYear);
   const lowRangePosition =
     lowYear.offsetLeft + lowYear.getBoundingClientRect().width / 2;
   const highRangePosition =
     highYear.offsetLeft + highYear.getBoundingClientRect().width / 2;
-
-  const pixels = scale(
+  // year < mainYearsNum[0] ? (year = mainYearsNum[0]) : year;
+  console.log(year);
+  console.log(
     year,
-    lowerYear,
-    highestYear,
+    closestLYear,
+    closestHYear,
     lowRangePosition,
     highRangePosition
   );
+
+  const pixels =
+    year < mainYearsNum[0]
+      ? lowRangePosition
+      : year > mainYearsNum[mainYearsNum.length - 1]
+      ? highRangePosition
+      : scale(
+          year,
+          closestLYear,
+          closestHYear,
+          lowRangePosition,
+          highRangePosition
+        );
   return pixels;
 }
 
@@ -1948,23 +2058,23 @@ function slideCenterHeader(currentSub) {
       )
     );
 
-    // console.log(relatesNum.length);
+    console.log(relatesNum.length);
 
-    // console.log(relatesNum);
+    console.log(relatesNum);
 
-    // if (relatesNum.length === 3 || relatesNum.length > 3) {
-    //   slidingHeader.classList.add("up-3");
-    // }
-    // if (relatesNum.length === 2) {
-    //   slidingHeader.classList.add("up-2");
-    // }
+    if (relatesNum.length === 3 || relatesNum.length > 3) {
+      slidingHeader.classList.add("up-3");
+    }
+    if (relatesNum.length === 2) {
+      slidingHeader.classList.add("up-2");
+    }
     if (relatesNum.length < 1) {
       slidingHeader.classList.add("up-1");
     }
-    // if (relatesNum.length === 0) {
-    //   slidingHeader.classList.add("up");
-    // }
-    // } else {
+    if (relatesNum.length === 0) {
+      slidingHeader.classList.add("up");
+    }
+  } else {
     slidingHeader.classList.add("up");
   }
 }
@@ -2007,123 +2117,122 @@ function setBottom() {
 // -------------------------------ZOOM-IN-/-ZOOM-OUT-FUNCTIONS------------------------------
 // -----------------------------------------------------------------------------------------
 
-function zoomIn() {
-  if (zoomLevel >= 7) {
-    return;
-  }
-  zoomLevel++;
+// function zoomIn() {
+//   if (zoomLevel >= 7) {
+//     return;
+//   }
+//   zoomLevel++;
 
-  console.log(zoomLevel);
-  // document.querySelectorAll(".year-label").forEach((year) => {
-  //   year.style.width = `${year.offsetWidth + 200}px`;
-  // });
-  yearTimeline.innerHTML = "";
-  years.forEach((year) => {
-    const span = document.createElement("span");
-    span.classList.add("year-label");
-    span.innerHTML = `<time class="time">${year}</time>`;
-    span.style.width = `${zoomLevel * 150}px`;
-    yearTimeline.appendChild(span);
-  });
+//   console.log(zoomLevel);
+//   // document.querySelectorAll(".year-label").forEach((year) => {
+//   //   year.style.width = `${year.offsetWidth + 200}px`;
+//   // });
+//   yearTimeline.innerHTML = "";
+//   years.forEach((year) => {
+//     const span = document.createElement("span");
+//     span.classList.add("year-label");
+//     span.innerHTML = `<time class="time">${year}</time>`;
+//     span.style.width = `${zoomLevel * 150}px`;
+//     yearTimeline.appendChild(span);
+//   });
 
-  lineInner.style.width = yearTimeline.offsetWidth + "px";
-  innerTimeline.style.width =
-    yearTimeline.offsetWidth +
-    lineBefore.getBoundingClientRect().width +
-    lineAfter.getBoundingClientRect().width +
-    "px";
+//   lineInner.style.width = yearTimeline.offsetWidth + "px";
+//   innerTimeline.style.width =
+//     yearTimeline.offsetWidth +
+//     lineBefore.getBoundingClientRect().width +
+//     lineAfter.getBoundingClientRect().width +
+//     "px";
 
-  document.querySelectorAll(".btn").forEach((btn) => {
-    btn.style.left = `${agetoPixelConversion(+btn.title, years)}px`;
-  });
+//   document.querySelectorAll(".btn").forEach((btn) => {
+//     btn.style.left = `${agetoPixelConversion(+btn.title, years)}px`;
+//   });
 
-  centerButton(currentBtn);
-  // updateYears();
-}
+//   centerButton(currentBtn);
+//   updateYears();
+// }
 
-function zoomOut() {
-  if (zoomLevel <= 1) {
-    return;
-  }
-  zoomLevel--;
-  // document.querySelectorAll(".year-label").forEach((year) => {
-  //   year.style.width = `${year.offsetWidth - 200}px`;
-  // });
-  console.log(zoomLevel);
+// function zoomOut() {
+//   if (zoomLevel <= 1) {
+//     return;
+//   }
+//   zoomLevel--;
+//   // document.querySelectorAll(".year-label").forEach((year) => {
+//   //   year.style.width = `${year.offsetWidth - 200}px`;
+//   // });
+//   console.log(zoomLevel);
 
-  yearTimeline.innerHTML = "";
-  years.forEach((year) => {
-    const span = document.createElement("span");
-    span.classList.add("year-label");
-    span.innerHTML = `<time class="time">${year}</time>`;
-    span.style.width = `${zoomLevel * 150}px`;
-    yearTimeline.appendChild(span);
-  });
+//   yearTimeline.innerHTML = "";
+//   years.forEach((year) => {
+//     const span = document.createElement("span");
+//     span.classList.add("year-label");
+//     span.innerHTML = `<time class="time">${year}</time>`;
+//     span.style.width = `${zoomLevel * 150}px`;
+//     yearTimeline.appendChild(span);
+//   });
 
-  lineInner.style.width = yearTimeline.offsetWidth + "px";
-  innerTimeline.style.width =
-    yearTimeline.offsetWidth +
-    lineBefore.getBoundingClientRect().width +
-    lineAfter.getBoundingClientRect().width +
-    "px";
+//   lineInner.style.width = yearTimeline.offsetWidth + "px";
+//   innerTimeline.style.width =
+//     yearTimeline.offsetWidth +
+//     lineBefore.getBoundingClientRect().width +
+//     lineAfter.getBoundingClientRect().width +
+//     "px";
 
-  document.querySelectorAll(".btn").forEach((btn) => {
-    btn.style.left = `${agetoPixelConversion(+btn.title, years)}px`;
-  });
+//   document.querySelectorAll(".btn").forEach((btn) => {
+//     btn.style.left = `${agetoPixelConversion(+btn.title, years)}px`;
+//   });
 
-  centerButton(currentBtn);
+//   centerButton(currentBtn);
 
-  // centerButton(currentBtn);
-}
+// }
 
 //------------------------------------------------------------------------------------
 //--------------------------SET-ADDITIONAL-YEARS-TO-MAIN-YEARS-ARRAY------------------
 // -----------------------------------------------------------------------------------
 
-function updateYears() {
-  if (zoomLevel % 4 === 0 && zoomLevel !== 0) {
-    const newYears = years
-      .map((year, index, array) => {
-        if (!array[index + 1]) {
-          return;
-        }
+// function updateYears() {
+//   if (zoomLevel % 4 === 0 && zoomLevel !== 0) {
+//     const newYears = years
+//       .map((year, index, array) => {
+//         if (!array[index + 1]) {
+//           return;
+//         }
 
-        const diff = (array[index] - array[index + 1]) / 2;
-        return diff + array[index + 1];
-      })
-      .filter((item) => item);
+//         const diff = (array[index] - array[index + 1]) / 2;
+//         return diff + array[index + 1];
+//       })
+//       .filter((item) => item);
 
-    const zoomYears = [...newYears, ...years]
-      .sort((a, b) => a - b)
-      .filter((item) => item);
+//     const zoomYears = [...newYears, ...years]
+//       .sort((a, b) => a - b)
+//       .filter((item) => item);
 
-    yearTimeline.innerHTML = "";
-    zoomYears.forEach((year) => {
-      const span = document.createElement("span");
-      span.classList.add("year-label");
-      span.innerHTML = `<time class="time">${year}</time>`;
-      yearTimeline.appendChild(span);
-    });
+//     yearTimeline.innerHTML = "";
+//     zoomYears.forEach((year) => {
+//       const span = document.createElement("span");
+//       span.classList.add("year-label");
+//       span.innerHTML = `<time class="time">${year}</time>`;
+//       yearTimeline.appendChild(span);
+//     });
 
-    document.querySelectorAll(".year-label").forEach((year) => {
-      year.style.width = `${year.offsetWidth + 50}px`;
-    });
+//     document.querySelectorAll(".year-label").forEach((year) => {
+//       year.style.width = `${year.offsetWidth + 50}px`;
+//     });
 
-    lineInner.style.width = yearTimeline.offsetWidth + "px";
+//     lineInner.style.width = yearTimeline.offsetWidth + "px";
 
-    innerTimeline.style.width =
-      yearTimeline.offsetWidth +
-      lineBefore.getBoundingClientRect().width +
-      lineAfter.getBoundingClientRect().width +
-      "px";
+//     innerTimeline.style.width =
+//       yearTimeline.offsetWidth +
+//       lineBefore.getBoundingClientRect().width +
+//       lineAfter.getBoundingClientRect().width +
+//       "px";
 
-    document.querySelectorAll(".btn").forEach((btn) => {
-      btn.style.left = `${agetoPixelConversion(+btn.title, zoomYears)}px`;
-    });
+//     document.querySelectorAll(".btn").forEach((btn) => {
+//       btn.style.left = `${agetoPixelConversion(+btn.title, zoomYears)}px`;
+//     });
 
-    centerButton(currentBtn);
-  }
-}
+//     centerButton(currentBtn);
+//   }
+// }
 
 // ----------------------------------------------------------------------------------------
 // -------------------------JUMP-TO-ANOTHER-BTN-ON-TIMELINE--------------------------------
