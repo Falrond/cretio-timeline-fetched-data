@@ -471,16 +471,17 @@ body {
 
 .showPath {
   position: absolute;
-  top: 17px;
-  right: 45px;
-  color: #fff;
-  background-color: #d7b221;
+  top: 18px;
+  right: 21px;
+  color: #d7b221;
+  background-color: #fff;
   padding: 6px;
-  font-size: 9px;
+  font-size: 14px;
   border-radius: 5px;
   border: none;
   cursor: pointer;
   display: none;
+  transition: all 0.2s ease;
 }
 
 .showPath.show {
@@ -488,7 +489,7 @@ body {
 }
 
 .showPath:hover {
-  background-color: #9b7f10;
+  color: #9b7f10;
 }
 
 .prevArrowBtn {
