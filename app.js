@@ -270,9 +270,11 @@ let dataExample = [
 
 let dataFromApi;
 let coord;
+let allCoord;
 let data;
 let isData = false;
 let years;
+let polylinee;
 
 // -----------------------------------------------------------------------------------------
 // ------------------------------------Query-Selector-Elements------------------------------
@@ -284,6 +286,7 @@ const lineBefore = document.querySelector(".line-before");
 const lineAfter = document.querySelector(".line-after");
 const yearTimeline = document.querySelector(".year-timeline");
 const timelineWidth = line.offsetWidth;
+const showPathBtn = document.querySelector(".showPath");
 const innerTimeline = document.querySelector(".timeline-inner");
 const timeLineContainer = document.querySelector(".timeline-container");
 let btns;
@@ -348,6 +351,21 @@ async function fetchData() {
             return L.marker([latitude, longitude], { title: `${id}` });
           });
 
+        const allCoordinates = fetchedData
+          .filter((item) => {
+            console.log(item.place);
+            return item.place !== null;
+          })
+          .map((item) => {
+            const [place] = Array.isArray(item.place)
+              ? item.place
+              : [item.place];
+            const id = item.id;
+            const { latitude, longitude } = place;
+            return L.marker([latitude, longitude], { title: `${id}` });
+          });
+        console.log(allCoordinates);
+        allCoord = allCoordinates;
         coord = coordinates;
 
         const yearsOnTimeline = fetchedData
@@ -393,6 +411,7 @@ async function fetchData() {
         // --------------------------------------------------------
 
         btns.forEach((marker) => {
+          console.log(marker.id);
           marker.addEventListener("mouseup", () => {
             markerOpen(marker.id, coordinates);
           });
@@ -1083,12 +1102,16 @@ function centerButton(btn) {
   }
 
   setBottom();
-  setTimeout(updateText, 500);
-
-  setTimeout(() => {
-    slideCenterHeader(currentSubject);
-  }, 500);
+  // setTimeout(, 500);
+  updateText();
+  // setTimeout(() => {
+  slideCenterHeader(currentSubject);
+  // }, 500);
   generateTimelines(currentSubject);
+  if (map.hasLayer(polylinee)) {
+    map.removeLayer(polylinee);
+    polylinee = "";
+  }
 }
 
 // ------------------------------------------------------
@@ -1186,62 +1209,68 @@ function getClosestButton() {
 // --------------------UPDATE-DATA-IN-SIDE-PANEL-AFTER-CLICK-ON-HEADER-----------------------
 // ------------------------------------------------------------------------------------------
 
-slidingHeader.addEventListener("click", () => {
-  if (
-    slidingHeader.classList.contains("up") &&
-    !slidingPanel.classList.contains("active")
-  ) {
-    slidingHeader.classList.remove("up");
-    setBottom();
-  } else if (!isData) {
-    return;
-  } else {
-    slidingHeader.classList.add("up");
-  }
-  isPrevBtn = false;
-  checkIsTrue();
-
-  slidingPanel.classList.add("active");
-  mapContainer.classList.add("active");
-
-  document.querySelector(".leaflet-left").classList.add("active");
-  document.querySelector(".leaflet-top.leaflet-right").classList.add("active");
-  document.querySelector(".prev").classList.add("active");
-  showLayerBtn.classList.add("active");
-  setRoute.classList.add("active");
-
-  slidingPanelHeader.classList.remove("show");
-  slidingPanelText.classList.remove("show");
-  relatedDiv.classList.remove("show");
-
-  // ---------------------------------------------------------------------------------------
-  // ----------------------------Fade-in-Fade-out-effect------------------------------------
-  // ---------------------------------------------------------------------------------------
-
-  const [currentSubject] = dataFromApi.filter(
-    (item) => item.id === +currentBtn.id
-  );
-  console.log(currentSubject);
-  sidePanelContainer = currentSubject;
-  console.log(sidePanelContainer);
-
-  setTimeout(function () {
-    relatedBtnContainer.innerHTML = "";
-    slidingPanelHeader.innerText = currentSubject.title;
-    slidingPanelText.innerText = currentSubject.description;
-    relatedDiv.innerHTML = "";
-    showDescriAndTimeline(currentSubject);
-    if (currentSubject.relates) {
-      showRelated(currentSubject.relates);
+slidingHeader.addEventListener(
+  "click",
+  () => {
+    if (
+      slidingHeader.classList.contains("up") &&
+      !slidingPanel.classList.contains("active")
+    ) {
+      slidingHeader.classList.remove("up");
+      setBottom();
+    } else if (!isData) {
+      return;
     } else {
-      relatedDiv.innerHTML = "";
+      slidingHeader.classList.add("up");
     }
+    isPrevBtn = false;
+    checkIsTrue();
 
-    slidingPanelHeader.classList.add("show");
-    slidingPanelText.classList.add("show");
-    relatedDiv.classList.add("show");
-  }, 500);
-});
+    slidingPanel.classList.add("active");
+    mapContainer.classList.add("active");
+
+    document.querySelector(".leaflet-left").classList.add("active");
+    document
+      .querySelector(".leaflet-top.leaflet-right")
+      .classList.add("active");
+    document.querySelector(".prev").classList.add("active");
+    showLayerBtn.classList.add("active");
+    setRoute.classList.add("active");
+
+    slidingPanelHeader.classList.remove("show");
+    slidingPanelText.classList.remove("show");
+    relatedDiv.classList.remove("show");
+
+    // ---------------------------------------------------------------------------------------
+    // ----------------------------Fade-in-Fade-out-effect------------------------------------
+    // ---------------------------------------------------------------------------------------
+
+    const [currentSubject] = dataFromApi.filter(
+      (item) => item.id === +currentBtn.id
+    );
+    console.log(currentSubject);
+    sidePanelContainer = currentSubject;
+    console.log(sidePanelContainer);
+
+    setTimeout(function () {
+      relatedBtnContainer.innerHTML = "";
+      slidingPanelHeader.innerText = currentSubject.title;
+      slidingPanelText.innerText = currentSubject.description;
+      relatedDiv.innerHTML = "";
+      showDescriAndTimeline(currentSubject);
+      if (currentSubject.relates) {
+        showRelated(currentSubject.relates);
+      } else {
+        relatedDiv.innerHTML = "";
+      }
+
+      slidingPanelHeader.classList.add("show");
+      slidingPanelText.classList.add("show");
+      relatedDiv.classList.add("show");
+    }, 500);
+  },
+  false
+);
 
 //---------------------------------------------------------------------------
 //------------Update-content-in-side-panel-after-move-timeline---------------
@@ -1257,6 +1286,11 @@ function updateSidePanel() {
   slidingPanelHeader.classList.remove("show");
   slidingPanelText.classList.remove("show");
   relatedDiv.classList.remove("show");
+  if (currentSubject.is_path) {
+    showPathBtn.classList.add("show");
+  } else {
+    showPathBtn.classList.remove("show");
+  }
 
   setTimeout(function () {
     relatedBtnContainer.innerHTML = "";
@@ -1418,7 +1452,11 @@ function createRelated(arr, dest) {
       // console.log(relatedBtnContainer);
 
       sidePanelContainer = relatedBtnData;
-
+      if (relatedBtnData.term_type === "place") {
+        console.log("cyce", relatedBtnData.id);
+        markerOpen(`${relatedBtnData.id}`, allCoord);
+        console.log(allCoord);
+      }
       // showRelated(sidePanelContainer.relates);
       console.log(sidePanelContainer);
 
@@ -1676,6 +1714,7 @@ function generateTimelines(event) {
             id: item.id,
             date: item.date,
             title: item.title,
+            image: item.image,
           };
         })
     );
@@ -1690,7 +1729,7 @@ function generateTimelines(event) {
 
   relatedData.slice(0, 3).forEach((relate, index) => {
     //------------------return-every-item-where-id-is-included----------------------
-    const { date, id, title } = relate;
+    const { date, id, title, image } = relate;
     // const relatedEvents = data.filter((event) => {
     //   return event.is_in_main_timeline && event.relates.includes(relate);
     // });
@@ -1706,7 +1745,7 @@ function generateTimelines(event) {
     // console.log(object);
     // const date = object.date;
     // console.log(date);
-
+    console.log(image);
     const startDate = date.start_year;
 
     // date.start_year <= dates[0].start_year
@@ -1719,7 +1758,7 @@ function generateTimelines(event) {
     // ? date.end_year
     // : dates[dates.length - 1].end_year;
     console.log(title);
-    createTimeline(startDate, endDate, index, id);
+    createTimeline(startDate, endDate, index, id, image, title);
   });
 }
 
@@ -1727,8 +1766,14 @@ function generateTimelines(event) {
 // ----------------------------CREATE-TIMELINE-AND-ADD-DYNAMIC-STYLES------------------------
 // ------------------------------------------------------------------------------------------
 
-function createTimeline(start, end, index, id) {
+function createTimeline(start, end, index, id, img, title) {
   const line = document.createElement("div");
+  const imgContainer = document.createElement("div");
+  imgContainer.classList.add("imgContainer");
+  imgContainer.innerHTML = `<img src="${img}">
+                            <span>${title}</span>
+  `;
+  line.appendChild(imgContainer);
   line.classList.add("additional-timeline");
   line.classList.add(`line-${index + 1}`);
   line.id = id;
@@ -1746,14 +1791,14 @@ function createTimeline(start, end, index, id) {
   additionalTimelinesContainer.style.opacity = "1";
   // }, 500);
 
-  additionalTimelinesContainer.style.height = `${(index + 1) * 20}px`;
+  additionalTimelinesContainer.style.height = `${(index + 1) * 22}px`;
 
   const pointerHeight = 40;
   document.querySelector(".frame-pointer").style.height = `${
     pointerHeight + (index + 1) * 20
   }px`;
 
-  slidingHeader.style.bottom = `${(index + 1) * 35}px`;
+  // slidingHeader.style.bottom = `${(index + 1) * 44}px`;
 }
 
 const closeBtn = document.querySelector(".closeBtn");
@@ -1774,7 +1819,7 @@ closeBtn.addEventListener("click", () => {
 // ----------------------------LEAFLET-MAP-----------------------------
 // --------------------------------------------------------------------
 
-let zoom = 11;
+let zoom = 12;
 let lat = 31.78246584395653;
 let lon = 35.22766113281251;
 
@@ -1886,9 +1931,9 @@ function centerMarker(latlng) {
     return;
   }
 
-  map.flyTo([latlng.lat, latlng.lng], 11, {
+  map.flyTo([latlng.lat, latlng.lng], 12, {
     animate: true,
-    duration: 6,
+    duration: 0.5,
   });
 }
 
@@ -1936,6 +1981,60 @@ setRoute.addEventListener("click", () => {
 polyline.setStyle({
   color: "#d7b221",
 });
+
+showPathBtn.addEventListener("click", (event) => {
+  event.stopPropagation();
+  console.log(drawPath(sidePanelContainer));
+
+  if (map.hasLayer(polylinee)) {
+    map.removeLayer(polylinee);
+    polylinee = "";
+  } else {
+    if (typeof drawPath(sidePanelContainer) === "undefined") {
+      console.log("zgadza się");
+      return;
+    }
+    polylinee = "";
+    polylinee = L.polyline(drawPath(sidePanelContainer));
+    polylinee.setStyle({
+      color: "#d7b221",
+    });
+    map.addLayer(polylinee);
+  }
+});
+
+function drawPath(currentItem) {
+  if (currentItem.path === null) {
+    return;
+  }
+
+  const path = currentItem.path;
+  const { components } = path;
+
+  let polylinePoints = components.map((item) => {
+    const { place } = item;
+    const { latitude, longitude } = place.place;
+    return [latitude, longitude];
+  });
+  return polylinePoints;
+
+  // setRoute.addEventListener("click", () => {
+  // if (
+  //   document
+  //     .querySelector(".leaflet-top.leaflet-right")
+  //     .classList.contains("show")
+  // ) {
+  //   document
+  //     .querySelector(".leaflet-top.leaflet-right")
+  //     .classList.remove("show");
+  //   document.querySelector(".leaflet-top.leaflet-right").style.display = "none";
+  // } else {
+  //   document.querySelector(".leaflet-top.leaflet-right").classList.add("show");
+  //   document.querySelector(".leaflet-top.leaflet-right").style.display =
+  //     "block";
+  // }
+  // });
+}
 
 // --------------------------------------------------------
 // -----------ADD-FUNCTIONS-TO-BTNS-IN-TIMELINE------------
@@ -2063,20 +2162,25 @@ function slideCenterHeader(currentSub) {
     console.log(relatesNum);
 
     if (relatesNum.length === 3 || relatesNum.length > 3) {
-      slidingHeader.classList.add("up-3");
+      // slidingHeader.classList.add("up-3");
+      slidingHeader.style.bottom = `150px`;
     }
     if (relatesNum.length === 2) {
-      slidingHeader.classList.add("up-2");
+      // slidingHeader.classList.add("up-2");
+      slidingHeader.style.bottom = `130px`;
     }
-    if (relatesNum.length < 1) {
-      slidingHeader.classList.add("up-1");
+    if (relatesNum.length === 1) {
+      // slidingHeader.classList.add("up-1");
+      slidingHeader.style.bottom = `90px`;
     }
     if (relatesNum.length === 0) {
-      slidingHeader.classList.add("up");
+      // slidingHeader.classList.add("up");
+      slidingHeader.style.bottom = `70px`;
     }
-  } else {
-    slidingHeader.classList.add("up");
   }
+  // } else {
+  //   slidingHeader.classList.add("up");
+  // }
 }
 
 // ------------------------------------------------------------------------------------------
