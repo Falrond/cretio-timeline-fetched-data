@@ -1819,7 +1819,7 @@ closeBtn.addEventListener("click", () => {
 // ----------------------------LEAFLET-MAP-----------------------------
 // --------------------------------------------------------------------
 
-let zoom = 12;
+let zoom = 10;
 let lat = 31.78246584395653;
 let lon = 35.22766113281251;
 
@@ -1931,7 +1931,7 @@ function centerMarker(latlng) {
     return;
   }
 
-  map.flyTo([latlng.lat, latlng.lng], 12, {
+  map.flyTo([latlng.lat, latlng.lng], 10, {
     animate: true,
     duration: 0.5,
   });
